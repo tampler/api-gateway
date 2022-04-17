@@ -1,0 +1,86 @@
+openapi: "3.0.3"
+info:
+  version: 1.0.0
+  title: Hello, World
+paths:
+  /hello/{hello_id}:
+    get:
+      tags:
+        - hello
+      summary: hello world sample
+      operationId: get_hello
+      parameters:
+        - name: hello_id
+          in: path
+          description: hello id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: hello world response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hello"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /hello:
+    post:
+      tags:
+        - hello
+      summary: hello world post sample
+      requestBody:
+        description: hello world request body
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  # NOTE(ryutah): Optinal
+                  # https://github.com/go-playground/validator を使ってリクエスト検証をできるようにしたい場合
+                  x-oapi-codegen-extra-tags:
+                    validate: required
+              required:
+                - message
+      responses:
+        "201":
+          description: hello world create response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hello"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+components:
+  responses:
+    ServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+    Hello:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        message:
+          type: string
+          description: hello message
+      required:
+        - message

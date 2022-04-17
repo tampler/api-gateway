@@ -1,0 +1,7 @@
+# Where to store the output
+output: internal/cloudcontrol/api/cc-client.go
+# Go package name
+package: api
+# Entities to generate
+generate:
+  - client

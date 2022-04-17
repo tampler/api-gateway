@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: NWS Cloud Control API
+  description: Cloud Control API
+  version: v0.0.2
+servers:
+  - url: http://localhost:8084/v1
+paths:
+  /metrics:
+    get:
+      responses:
+        "200":
+          description: metrics response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Metrics"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /v1:
+    post:
+      tags:
+        - main
+      summary: Cloud Control List Action
+      requestBody:
+        description: CC List body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Request"
+
+      responses:
+        "201":
+          description: CC List - valid response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+components:
+  responses:
+    ServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Request:
+      type: object
+      properties:
+        Mandatory:
+          $ref: "#/components/schemas/Mandatory"
+        Options:
+          $ref: "#/components/schemas/Options"
+      required:
+        - Mandatory
+
+    Mandatory:
+      type: object
+      properties:
+        Action:
+          type: string
+          enum:
+            - List
+            - Create
+            - Read
+            - Update
+            - Delete
+            - Nuke
+            - Resolve
+          x-oapi-codegen-extra-tags:
+            validate: required
+        Command:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: required
+      required:
+        - Action
+        - Command
+
+    Options:
+      type: object
+      properties:
+        # Enabled zones
+        Zone:
+          type: string
+          enum:
+            - default
+            - ru-msk-0
+
+        # Method parameters
+        Params:
+          type: array
+          items:
+            type: string
+
+        # Exclude from action, e.g don't Nuke
+        Exclude:
+          type: array
+          items:
+            type: string
+
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+
+    Success:
+      type: object
+      properties:
+        Service:
+          type: string
+        Api:
+          type: string
+        Data:
+          type: string
+          format: byte
+      required:
+        - Service
+        - Api
+        - Data
+    Metrics:
+      type: array
+      items:
+        type: string

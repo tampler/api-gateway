@@ -1,0 +1,20 @@
+FROM golang:1.18.1-alpine as builder 
+
+RUN apk add --no-cache --update && apk add --no-cache git
+
+WORKDIR /go/src/github.com/neurodyne-web-services/nws-sdk-go
+
+COPY . .
+
+RUN go mod tidy --compat=1.18
+
+RUN cd cmd/cloudcontrol && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o api
+
+FROM alpine:latest 
+
+WORKDIR /app
+
+COPY --from=builder /go/src/github.com/neurodyne-web-services/nws-sdk-go/cmd/cloudcontrol/api .
+
+EXPOSE 8084 
+ENTRYPOINT ["/app/api"]

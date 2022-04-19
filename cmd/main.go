@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -64,15 +65,13 @@ func main() {
 	// Read PEM file
 	pemData, err := ioutil.ReadFile(PEM_FILE)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to read the CA file: - %s", err)
-		os.Exit(1)
+		log.Fatalf("Failed to read the CA file: - %s", err)
 	}
 
 	// Read Auth config file
 	authData, err := ioutil.ReadFile(AUTH_FILE)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to read the Auth config file: - %s", err)
-		os.Exit(1)
+		log.Fatalf("Failed to read the Auth config file: - %s", err)
 	}
 
 	// JWT validator

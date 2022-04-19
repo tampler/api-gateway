@@ -14,6 +14,7 @@ require (
 	github.com/nats-io/nats.go v1.14.0
 	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220417201059-224a7ca4795b
 	github.com/stretchr/testify v1.7.1
+	google.golang.org/protobuf v1.27.1
 )
 
 require (
@@ -52,7 +53,6 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

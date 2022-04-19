@@ -27,6 +27,9 @@ upd:
 apigen:
 	@./scripts/apigen.sh
 
+protogen:
+	@protoc -I proto proto/*.proto --proto_path=./proto --go_out=./proto
+
 run:
 	@go run -v ./cmd/main.go
 

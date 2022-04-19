@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol"
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol/api"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
@@ -48,12 +48,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Build a logger
+	// var tmp logging.Logger
+	// zl, err := .MakeDebugLogger()
+
 	// Clear out the servers array in the swagger spec, that skips validating
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := cloudcontrol.MakeCCServer()
+	cc := cloudcontrol.MakeAPIServer()
 
 	// This is how you set up a basic Echo router
 	e := echo.New()
@@ -129,13 +133,16 @@ func main() {
 		}))
 	}
 
-	// if DUMP_ON_ERROR {
-	// 	e.Use(middleware.BodyDump(func(c echo.Context, req, rsp []byte) {
-	// 		if c.Response().Status != http.StatusCreated {
-	// 			zl.Error("Request failed", zap.String("RESP", string(rsp)), zap.String("REQ", string(req)))
-	// 		}
-	// 	}))
-	// }
+	if DUMP_ON_ERROR {
+		e.Use(middleware.BodyDump(func(c echo.Context, req, rsp []byte) {
+			if c.Response().Status != http.StatusCreated {
+				// zl.Error("Request failed", zap.String("RESP", string(rsp)), zap.String("REQ", string(req)))
+				// fmt.Errorf("*** Request failed: RESP - %v, REQ - %v \n", rsp, req)
+				log.Infof("*** Req: %v \n", string(req))
+				log.Infof("*** Rsp: %v \n", string(rsp))
+			}
+		}))
+	}
 
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.

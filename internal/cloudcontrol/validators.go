@@ -29,6 +29,7 @@ func availableServices() []string {
 	return out
 }
 
+// availableResources - list resources from all available services
 func availableResources() []string {
 	out := make([]string, 2, defaultSliceLen)
 

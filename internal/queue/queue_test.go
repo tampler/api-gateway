@@ -31,22 +31,20 @@ func TestQueue_mock(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPub_nats(t *testing.T) {
+func TestQueue_nats(t *testing.T) {
 
-	// Connect to a server
-	nc, _ := nats.Connect(url)
+	queue := NatsQueue{}
 
-	// Simple Publisher
-	nc.Publish("foo", []byte("Hello World"))
+	err := queue.Connect(NATS_URL)
+	assert.NoError(t, err)
+	assert.NotNil(t, queue.client)
 
-	// Simple Async Subscriber
-	nc.Subscribe("foo", func(m *nats.Msg) {
-		fmt.Printf("Received a message: %s\n", string(m.Data))
+	err = queue.Publish(topic, []byte(msg))
+	assert.NoError(t, err)
+
+	err = queue.Subscribe(topic, func(m *nats.Msg) {
+		fmt.Printf("*** Read value: %v \n", m)
+		assert.Equal(t, msg, m)
 	})
-
-	// Responding to a request message
-	nc.Subscribe("request", func(m *nats.Msg) {
-		m.Respond([]byte("answer is 42"))
-	})
-
+	assert.NoError(t, err)
 }

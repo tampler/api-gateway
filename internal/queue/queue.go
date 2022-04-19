@@ -7,12 +7,8 @@ const (
 type Dict map[string][]byte
 type SubCallback[A any] func(A)
 
-// type Publisher[A, B any] interface {
-// 	Connect(string, ...A) (B, error)
-// 	Publish(string, []byte) error
-// }
-type Queue interface {
-	Connect(string, ...string) (string, error)
+type Queue[A any] interface {
+	Connect(string, ...string) error
 	Publish(string, []byte) error
-	Subscribe(string, SubCallback[string]) (string, error)
+	Subscribe(string, func(*A)) error
 }

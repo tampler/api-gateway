@@ -1,13 +1,28 @@
 package cloudcontrol
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
 )
+
+const (
+	NATS_URL = "nats://hyp:4222"
+	Topic    = "Command.Ingress"
+)
+
+type Command struct {
+	service  string
+	resource string
+	action   string
+}
 
 type APIServer struct{}
 
@@ -50,7 +65,21 @@ func (c *APIServer) PostV1(ctx echo.Context) error {
 	fmt.Printf("**** Inputs: service - %s, resource - %s, action - %s \n", serviceName, resourceName, action)
 	fmt.Println(params)
 
+	comm := Command{
+		service:  serviceName,
+		resource: resourceName,
+		action:   action,
+	}
+
+	res, err := sendRequestWithReply(comm)
+	if err != nil {
+		return sendCloudControlError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
+	}
+
+	fmt.Printf("*** API response: %s", string(res))
+
 	return sendCloudControlError(ctx, http.StatusInternalServerError, "Failed to Execute command")
+
 }
 
 // This function wraps sending of an error in the Error format, and
@@ -62,4 +91,25 @@ func sendCloudControlError(ctx echo.Context, code int, message string) error {
 	}
 	err := ctx.JSON(code, petErr)
 	return err
+}
+
+// sendRequestWithReply - sends a Cloud Control API command to subscribed executors
+func sendRequestWithReply(cmd Command) ([]byte, error) {
+
+	var buff bytes.Buffer
+	enc := gob.NewEncoder(&buff)
+	enc.Encode(cmd)
+
+	nc, err := nats.Connect(NATS_URL)
+	if err != nil {
+		return nil, err
+	}
+	defer nc.Close()
+
+	reply, err := nc.Request("foo", []byte("I need help"), 4*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	return reply.Data, nil
 }

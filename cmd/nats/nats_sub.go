@@ -16,15 +16,17 @@ const (
 func main() {
 
 	// Create server connection
-	conn, err := nats.Connect(NATS_URL)
+	nc, err := nats.Connect(NATS_URL)
 	if err != nil {
 		log.Fatalf("Failed to connect to NATS server %v", NATS_URL)
 	}
 
 	log.Println("Connected to " + NATS_URL)
+
 	// Subscribe to subject
-	conn.Subscribe(topic, func(msg *nats.Msg) {
+	nc.Subscribe(topic, func(msg *nats.Msg) {
 		fmt.Printf("*** Sub: got message: %v \n", string(msg.Data))
+		nc.Publish(msg.Reply, []byte("I'm here"))
 	})
 
 	// Keep the connection alive

@@ -20,3 +20,5 @@ metrics_name = "api_gateway"
 
 [nats]
 server = "nats://hyp:4222"
+topic = "command.ingress"
+timeout = 10

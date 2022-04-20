@@ -10,25 +10,37 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/nats-io/nats.go"
+	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
+	"go.uber.org/zap"
 )
 
-const (
-	NATS_URL = "nats://hyp:4222"
-	Topic    = "Command.Ingress"
-)
+type NatsConfig struct {
+	timeout int
+	url     string
+	topic   string
+}
 
 type Command struct {
 	service  string
 	resource string
 	action   string
+	cfg      NatsConfig
 }
 
-type APIServer struct{}
+// APIServer - top level execution engine
+type APIServer struct {
+	zl  *zap.Logger
+	cfg *config.AppConfig
+}
 
-// FIXME - reimplement this with a Pool
-func MakeAPIServer() *APIServer {
-	var srv APIServer
+// MakeAPIServer - APIServer factory
+func MakeAPIServer(c *config.AppConfig, z *zap.Logger) *APIServer {
+
+	srv := APIServer{
+		zl:  z,
+		cfg: c,
+	}
 
 	return &srv
 }
@@ -76,7 +88,7 @@ func (c *APIServer) PostV1(ctx echo.Context) error {
 		return sendCloudControlError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
 	}
 
-	fmt.Printf("*** API response: %s", string(res))
+	fmt.Printf("*** Exec response: %s", string(res))
 
 	return sendCloudControlError(ctx, http.StatusInternalServerError, "Failed to Execute command")
 
@@ -100,16 +112,18 @@ func sendRequestWithReply(cmd Command) ([]byte, error) {
 	enc := gob.NewEncoder(&buff)
 	enc.Encode(cmd)
 
-	nc, err := nats.Connect(NATS_URL)
+	nc, err := nats.Connect(cmd.cfg.url)
 	if err != nil {
 		return nil, err
 	}
 	defer nc.Close()
 
-	reply, err := nc.Request("foo", []byte("I need help"), 4*time.Second)
+	reply, err := nc.Request(cmd.cfg.topic, buff.Bytes(), time.Duration(cmd.cfg.timeout)*time.Second)
 	if err != nil {
 		return nil, err
 	}
+
+	nc.Drain()
 
 	return reply.Data, nil
 }

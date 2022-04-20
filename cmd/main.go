@@ -20,6 +20,7 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol"
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol/api"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
+	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"golang.org/x/time/rate"
 )
 
@@ -30,17 +31,16 @@ const (
 
 func main() {
 
-	// Build logger
-	// zl, err := logging.MakeDebugLogger()
-	// if err != nil {
-	// 	fmt.Fprintln(os.Stderr, "Failed to instantiate a logger")
-	// 	os.Exit(1)
-	// }
+	// Build a logger
+	zl, err := logging.MakeDebugLogger()
+	if err != nil {
+		log.Fatal("Failed to instantiate a logger")
+	}
 
 	// Build a global config
 	var cfg config.AppConfig
+
 	if err := cfg.AppInit(); err != nil {
-		// zl.Fatal("Config failed", zap.String("Error", err.Error()))
 		log.Fatal("Config failed %s", err.Error())
 	}
 
@@ -55,23 +55,23 @@ func main() {
 	swagger.Servers = nil
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := cloudcontrol.MakeAPIServer()
+	cc := cloudcontrol.MakeAPIServer(&cfg, zl)
 
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
 	// Enable metrics middleware
-	p := prometheus.NewPrometheus(cfg.MetricsName, nil)
+	p := prometheus.NewPrometheus(cfg.Debug.MetricsName, nil)
 	p.Use(e)
 
 	// Read PEM file
-	pemData, err := ioutil.ReadFile(cfg.PemFile)
+	pemData, err := ioutil.ReadFile(cfg.Http.PemFile)
 	if err != nil {
 		log.Fatalf("Failed to read the CA file: - %s", err)
 	}
 
 	// Read Auth config file
-	authData, err := ioutil.ReadFile(cfg.AuthFile)
+	authData, err := ioutil.ReadFile(cfg.Http.AuthFile)
 	if err != nil {
 		log.Fatalf("Failed to read the Auth config file: - %s", err)
 	}
@@ -99,15 +99,15 @@ func main() {
 	}
 
 	// Set Request Limiter
-	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(cfg.MaxRPS))))
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(cfg.Http.MaxRPS))))
 
 	// Set Request Body size limit
-	e.Use(middleware.BodyLimit(cfg.BodyLimit))
+	e.Use(middleware.BodyLimit(cfg.Http.BodyLimit))
 
 	// Set Response Timeout
-	if cfg.AllowTimeout {
+	if cfg.Http.AllowTimeout {
 		e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
-			Timeout: time.Duration(cfg.Timeout) * time.Second,
+			Timeout: time.Duration(cfg.Http.Timeout) * time.Second,
 		}))
 	}
 
@@ -125,13 +125,13 @@ func main() {
 	// e.Use(middleware.LoggerWithConfig(cfg))
 	e.Use(middleware.Logger())
 
-	if cfg.AllowCompress {
+	if cfg.Http.AllowCompress {
 		e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-			Level: cfg.CompressLevel,
+			Level: cfg.Http.CompressLevel,
 		}))
 	}
 
-	if cfg.DumpOnError {
+	if cfg.Debug.DumpOnError {
 		e.Use(middleware.BodyDump(func(c echo.Context, req, rsp []byte) {
 			if c.Response().Status != http.StatusCreated {
 				// zl.Error("Request failed", zap.String("RESP", string(rsp)), zap.String("REQ", string(req)))
@@ -151,7 +151,7 @@ func main() {
 	api.RegisterHandlers(e, cc)
 
 	// And we serve HTTP until the world ends.
-	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Http.Port)))
 }
 
 func restricted(c echo.Context) error {

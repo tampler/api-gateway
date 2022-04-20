@@ -50,9 +50,9 @@ func commandValidator(command interface{}) error {
 		return fmt.Errorf("invalid service name specified")
 	}
 
-	if !utils.Contains(availableResources(), cmd[2]) {
-		return fmt.Errorf("invalid resource name specified")
-	}
+	// if !utils.Contains(availableResources(), cmd[2]) {
+	// 	return fmt.Errorf("invalid resource name specified")
+	// }
 
 	return nil
 }

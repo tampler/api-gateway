@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -20,37 +19,52 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol"
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol/api"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
+	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 )
 
 const (
-	AUTH_FILE = "/tmp/app.json"
-	PEM_FILE  = "/tmp/token_jwt_key.pem"
-
-	MAX_REQ_LEN = "4K"
-	MAX_RPS     = 20
-
-	ADD_TIMEOUT = false
-	TIMEOUT     = 300
-
-	ADD_COMPRESS   = false
-	COMPRESS_LEVEL = 5
-
-	DUMP_ON_ERROR = true
+	CONFIG_PATH = "./configs"
+	CONFIG_NAME = "app"
 )
 
 func main() {
-	var port = flag.Int("port", 8084, "Port for test HTTP server")
-	flag.Parse()
+
+	// Build logger
+	zl, err := logging.MakeDebugLogger()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to instantiate a logger")
+		os.Exit(1)
+	}
+
+	// Read global config
+	viper.SetConfigName(CONFIG_NAME)
+	viper.AddConfigPath(CONFIG_PATH)
+
+	if err := viper.ReadInConfig(); err != nil {
+		zl.Fatal("Failed to read config file", zap.String("config name", CONFIG_NAME), zap.String("config path", CONFIG_PATH))
+	}
+
+	// App config
+	port := viper.GetInt("http.port")
+	pemFile := viper.GetString("http.pem_file")
+	authFile := viper.GetString("http.auth_file")
+	maxRPS := viper.GetInt("http.max_rps")
+	bodyLimit := viper.GetString("http.body_limit")
+	allowTimeout := viper.GetBool("http.allow_timeout")
+	timeout := viper.GetInt("http.timeout")
+	allowCompress := viper.GetBool("http.allow_compress")
+	compressLevel := viper.GetInt("http.compress_level")
+	dumpOnError := viper.GetBool("debug.dump_on_error")
+	metricsName := viper.GetString("debug.metrics_name")
 
 	swagger, err := api.GetSwagger()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
 		os.Exit(1)
 	}
-
-	// Build a logger
-	// var tmp logging.Logger
-	// zl, err := .MakeDebugLogger()
 
 	// Clear out the servers array in the swagger spec, that skips validating
 	// that server names match. We don't know how this thing will be run.
@@ -63,17 +77,17 @@ func main() {
 	e := echo.New()
 
 	// Enable metrics middleware
-	p := prometheus.NewPrometheus("api_gateway", nil)
+	p := prometheus.NewPrometheus(metricsName, nil)
 	p.Use(e)
 
 	// Read PEM file
-	pemData, err := ioutil.ReadFile(PEM_FILE)
+	pemData, err := ioutil.ReadFile(pemFile)
 	if err != nil {
 		log.Fatalf("Failed to read the CA file: - %s", err)
 	}
 
 	// Read Auth config file
-	authData, err := ioutil.ReadFile(AUTH_FILE)
+	authData, err := ioutil.ReadFile(authFile)
 	if err != nil {
 		log.Fatalf("Failed to read the Auth config file: - %s", err)
 	}
@@ -101,15 +115,15 @@ func main() {
 	}
 
 	// Set Request Limiter
-	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(MAX_RPS)))
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(maxRPS))))
 
 	// Set Request Body size limit
-	e.Use(middleware.BodyLimit(MAX_REQ_LEN))
+	e.Use(middleware.BodyLimit(bodyLimit))
 
 	// Set Response Timeout
-	if ADD_TIMEOUT {
+	if allowTimeout {
 		e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
-			Timeout: TIMEOUT * time.Second,
+			Timeout: time.Duration(timeout) * time.Second,
 		}))
 	}
 
@@ -127,19 +141,16 @@ func main() {
 	// e.Use(middleware.LoggerWithConfig(cfg))
 	e.Use(middleware.Logger())
 
-	if ADD_COMPRESS {
+	if allowCompress {
 		e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-			Level: COMPRESS_LEVEL,
+			Level: compressLevel,
 		}))
 	}
 
-	if DUMP_ON_ERROR {
+	if dumpOnError {
 		e.Use(middleware.BodyDump(func(c echo.Context, req, rsp []byte) {
 			if c.Response().Status != http.StatusCreated {
-				// zl.Error("Request failed", zap.String("RESP", string(rsp)), zap.String("REQ", string(req)))
-				// fmt.Errorf("*** Request failed: RESP - %v, REQ - %v \n", rsp, req)
-				log.Infof("*** Req: %v \n", string(req))
-				log.Infof("*** Rsp: %v \n", string(rsp))
+				zl.Error("Request failed", zap.String("RESP", string(rsp)), zap.String("REQ", string(req)))
 			}
 		}))
 	}
@@ -155,7 +166,7 @@ func main() {
 	api.RegisterHandlers(e, cc)
 
 	// And we serve HTTP until the world ends.
-	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", *port)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", port)))
 }
 
 func restricted(c echo.Context) error {

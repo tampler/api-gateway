@@ -15,28 +15,8 @@ import (
 	"go.uber.org/zap"
 )
 
-type NatsConfig struct {
-	timeout int
-	url     string
-	topic   string
-}
-
-type Command struct {
-	service  string
-	resource string
-	action   string
-	cfg      NatsConfig
-}
-
-// APIServer - top level execution engine
-type APIServer struct {
-	zl  *zap.Logger
-	cfg *config.AppConfig
-}
-
 // MakeAPIServer - APIServer factory
 func MakeAPIServer(c *config.AppConfig, z *zap.Logger) *APIServer {
-
 	srv := APIServer{
 		zl:  z,
 		cfg: c,
@@ -74,13 +54,18 @@ func (c *APIServer) PostV1(ctx echo.Context) error {
 	resourceName := cmd[2]
 	action := string(req.Mandatory.Action)
 
-	fmt.Printf("**** Inputs: service - %s, resource - %s, action - %s \n", serviceName, resourceName, action)
+	// fmt.Printf("**** Inputs: service - %s, resource - %s, action - %s \n", serviceName, resourceName, action)
 	fmt.Println(params)
 
 	comm := Command{
 		service:  serviceName,
 		resource: resourceName,
 		action:   action,
+		cfg: NatsConfig{
+			timeout: c.cfg.Nats.Timeout,
+			server:  c.cfg.Nats.Server,
+			topic:   c.cfg.Nats.Topic,
+		},
 	}
 
 	res, err := sendRequestWithReply(comm)
@@ -108,11 +93,13 @@ func sendCloudControlError(ctx echo.Context, code int, message string) error {
 // sendRequestWithReply - sends a Cloud Control API command to subscribed executors
 func sendRequestWithReply(cmd Command) ([]byte, error) {
 
+	// fmt.Printf("****NATS server %s topic %s \n", cmd.cfg.server, cmd.cfg.topic)
+
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
 	enc.Encode(cmd)
 
-	nc, err := nats.Connect(cmd.cfg.url)
+	nc, err := nats.Connect(cmd.cfg.server)
 	if err != nil {
 		return nil, err
 	}

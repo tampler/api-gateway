@@ -16,12 +16,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol"
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol/api"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
-	"github.com/neurodyne-web-services/api-gateway/internal/logging"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
 
@@ -33,32 +31,18 @@ const (
 func main() {
 
 	// Build logger
-	zl, err := logging.MakeDebugLogger()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to instantiate a logger")
-		os.Exit(1)
+	// zl, err := logging.MakeDebugLogger()
+	// if err != nil {
+	// 	fmt.Fprintln(os.Stderr, "Failed to instantiate a logger")
+	// 	os.Exit(1)
+	// }
+
+	// Build a global config
+	var cfg config.AppConfig
+	if err := cfg.AppInit(); err != nil {
+		// zl.Fatal("Config failed", zap.String("Error", err.Error()))
+		log.Fatal("Config failed %s", err.Error())
 	}
-
-	// Read global config
-	viper.SetConfigName(CONFIG_NAME)
-	viper.AddConfigPath(CONFIG_PATH)
-
-	if err := viper.ReadInConfig(); err != nil {
-		zl.Fatal("Failed to read config file", zap.String("config name", CONFIG_NAME), zap.String("config path", CONFIG_PATH))
-	}
-
-	// App config
-	port := viper.GetInt("http.port")
-	pemFile := viper.GetString("http.pem_file")
-	authFile := viper.GetString("http.auth_file")
-	maxRPS := viper.GetInt("http.max_rps")
-	bodyLimit := viper.GetString("http.body_limit")
-	allowTimeout := viper.GetBool("http.allow_timeout")
-	timeout := viper.GetInt("http.timeout")
-	allowCompress := viper.GetBool("http.allow_compress")
-	compressLevel := viper.GetInt("http.compress_level")
-	dumpOnError := viper.GetBool("debug.dump_on_error")
-	metricsName := viper.GetString("debug.metrics_name")
 
 	swagger, err := api.GetSwagger()
 	if err != nil {
@@ -77,17 +61,17 @@ func main() {
 	e := echo.New()
 
 	// Enable metrics middleware
-	p := prometheus.NewPrometheus(metricsName, nil)
+	p := prometheus.NewPrometheus(cfg.MetricsName, nil)
 	p.Use(e)
 
 	// Read PEM file
-	pemData, err := ioutil.ReadFile(pemFile)
+	pemData, err := ioutil.ReadFile(cfg.PemFile)
 	if err != nil {
 		log.Fatalf("Failed to read the CA file: - %s", err)
 	}
 
 	// Read Auth config file
-	authData, err := ioutil.ReadFile(authFile)
+	authData, err := ioutil.ReadFile(cfg.AuthFile)
 	if err != nil {
 		log.Fatalf("Failed to read the Auth config file: - %s", err)
 	}
@@ -115,15 +99,15 @@ func main() {
 	}
 
 	// Set Request Limiter
-	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(maxRPS))))
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(cfg.MaxRPS))))
 
 	// Set Request Body size limit
-	e.Use(middleware.BodyLimit(bodyLimit))
+	e.Use(middleware.BodyLimit(cfg.BodyLimit))
 
 	// Set Response Timeout
-	if allowTimeout {
+	if cfg.AllowTimeout {
 		e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
-			Timeout: time.Duration(timeout) * time.Second,
+			Timeout: time.Duration(cfg.Timeout) * time.Second,
 		}))
 	}
 
@@ -141,16 +125,17 @@ func main() {
 	// e.Use(middleware.LoggerWithConfig(cfg))
 	e.Use(middleware.Logger())
 
-	if allowCompress {
+	if cfg.AllowCompress {
 		e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-			Level: compressLevel,
+			Level: cfg.CompressLevel,
 		}))
 	}
 
-	if dumpOnError {
+	if cfg.DumpOnError {
 		e.Use(middleware.BodyDump(func(c echo.Context, req, rsp []byte) {
 			if c.Response().Status != http.StatusCreated {
-				zl.Error("Request failed", zap.String("RESP", string(rsp)), zap.String("REQ", string(req)))
+				// zl.Error("Request failed", zap.String("RESP", string(rsp)), zap.String("REQ", string(req)))
+				log.Error("*** Request failed: RESP %v, REQ %v", rsp, req)
 			}
 		}))
 	}
@@ -166,7 +151,7 @@ func main() {
 	api.RegisterHandlers(e, cc)
 
 	// And we serve HTTP until the world ends.
-	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", port)))
+	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Port)))
 }
 
 func restricted(c echo.Context) error {

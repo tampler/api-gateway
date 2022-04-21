@@ -7,7 +7,7 @@ import (
 
 // This function wraps sending of an error in the Error format, and
 // handling the failure to marshal that.``
-func sendCloudControlError(ctx echo.Context, code int, message string) error {
+func sendAPIError(ctx echo.Context, code int, message string) error {
 	petErr := api.Error{
 		Code:    int32(code),
 		Message: message,

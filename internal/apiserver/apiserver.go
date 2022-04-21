@@ -28,7 +28,7 @@ func MakeAPIServer(nc *nats.Conn, c *config.AppConfig, z *zap.Logger) *APIServer
 }
 
 func (s *APIServer) GetMetrics(ctx echo.Context) error {
-	return sendCloudControlError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
+	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
 
 func (s *APIServer) PostV1(ctx echo.Context) error {
@@ -38,12 +38,12 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	err := ctx.Bind(&req)
 	if err != nil {
-		return sendCloudControlError(ctx, http.StatusBadRequest, "Failed to parse input API request")
+		return sendAPIError(ctx, http.StatusBadRequest, "Failed to parse input API request")
 	}
 
 	// Validate request fields
 	if err = ctx.Validate(req.Mandatory.Command); err != nil {
-		return sendCloudControlError(ctx, http.StatusInternalServerError, err.Error())
+		return sendAPIError(ctx, http.StatusInternalServerError, err.Error())
 	}
 
 	var params []string
@@ -75,10 +75,8 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	res, err := s.sendRequestWithReply(comm)
 	if err != nil {
-		return sendCloudControlError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
+		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
 	}
-
-	fmt.Printf("*** Result buffer: %v \n", string(res))
 
 	// Repack to the full Runner Result
 	out := APIResponseMessage{
@@ -89,13 +87,13 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	buf, err := json.Marshal(&out)
 	if err != nil {
-		return sendCloudControlError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
+		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
 	}
 
 	// Now, we have to return the Runner response
 	err = ctx.JSONBlob(http.StatusCreated, buf)
 	if err != nil {
-		return sendCloudControlError(ctx, http.StatusInternalServerError, "Failed to send response")
+		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to send response")
 	}
 
 	// Return no error. This refers to the handler. Even if we return an HTTP

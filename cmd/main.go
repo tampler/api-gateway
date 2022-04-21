@@ -16,6 +16,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol"
 	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol/api"
@@ -44,6 +45,16 @@ func main() {
 		log.Fatal("Config failed %s", err.Error())
 	}
 
+	nc, err := nats.Connect(cfg.Nats.Server)
+	if err != nil {
+		log.Fatalf("Failed to connect to NATS server: %v \n", err)
+	}
+	defer nc.Close()
+
+	// Create an instance of our handler which satisfies the generated interface
+	cc := cloudcontrol.MakeAPIServer(nc, &cfg, zl)
+
+	// Build Swagger API
 	swagger, err := api.GetSwagger()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
@@ -53,9 +64,6 @@ func main() {
 	// Clear out the servers array in the swagger spec, that skips validating
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
-
-	// Create an instance of our handler which satisfies the generated interface
-	cc := cloudcontrol.MakeAPIServer(&cfg, zl)
 
 	// This is how you set up a basic Echo router
 	e := echo.New()

@@ -16,20 +16,22 @@ import (
 )
 
 // MakeAPIServer - APIServer factory
-func MakeAPIServer(c *config.AppConfig, z *zap.Logger) *APIServer {
+func MakeAPIServer(nc *nats.Conn, c *config.AppConfig, z *zap.Logger) *APIServer {
 	srv := APIServer{
-		zl:  z,
-		cfg: c,
+		nats: nc,
+		zl:   z,
+		cfg:  c,
 	}
 
 	return &srv
 }
 
-func (c *APIServer) GetMetrics(ctx echo.Context) error {
+func (s *APIServer) GetMetrics(ctx echo.Context) error {
 	return sendCloudControlError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
 
-func (c *APIServer) PostV1(ctx echo.Context) error {
+func (s *APIServer) PostV1(ctx echo.Context) error {
+
 	// Extract API request from REST
 	var req api.Request
 
@@ -38,6 +40,7 @@ func (c *APIServer) PostV1(ctx echo.Context) error {
 		return sendCloudControlError(ctx, http.StatusBadRequest, "Failed to parse input API request")
 	}
 
+	// Validate request fields
 	if err = ctx.Validate(req.Mandatory.Command); err != nil {
 		return sendCloudControlError(ctx, http.StatusInternalServerError, err.Error())
 	}
@@ -54,21 +57,22 @@ func (c *APIServer) PostV1(ctx echo.Context) error {
 	resourceName := msg[2]
 	action := string(req.Mandatory.Action)
 
-	fmt.Printf("**** API GW --- Inputs: service - %s, resource - %s, action - %s \n", serviceName, resourceName, action)
-	fmt.Println(params)
-
+	// Extract API command
 	comm := APIMessage{
-		Service:  serviceName,
-		Resource: resourceName,
-		Action:   action,
+		Cmd: APICommand{
+			Service:  serviceName,
+			Resource: resourceName,
+			Action:   action,
+			Params:   params,
+		},
 		Cfg: NatsConfig{
-			Timeout: c.cfg.Nats.Timeout,
-			Server:  c.cfg.Nats.Server,
-			Topic:   c.cfg.Nats.Topic,
+			Timeout: s.cfg.Nats.Timeout,
+			Server:  s.cfg.Nats.Server,
+			Topic:   s.cfg.Nats.Topic,
 		},
 	}
 
-	res, err := sendRequestWithReply(comm)
+	res, err := s.sendRequestWithReply(comm)
 	if err != nil {
 		return sendCloudControlError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
 	}
@@ -76,42 +80,19 @@ func (c *APIServer) PostV1(ctx echo.Context) error {
 	fmt.Printf("*** Exec response: %s \n", string(res))
 
 	return sendCloudControlError(ctx, http.StatusInternalServerError, "Failed to Execute command")
-
-}
-
-// This function wraps sending of an error in the Error format, and
-// handling the failure to marshal that.``
-func sendCloudControlError(ctx echo.Context, code int, message string) error {
-	petErr := api.Error{
-		Code:    int32(code),
-		Message: message,
-	}
-	err := ctx.JSON(code, petErr)
-	return err
 }
 
 // sendRequestWithReply - sends a Cloud Control API command to subscribed executors
-func sendRequestWithReply(msg APIMessage) ([]byte, error) {
-
-	// fmt.Printf("****NATS server %s topic %s \n", msg.Cfg.server, msg.Cfg.topic)
-	fmt.Printf(">>> Command: %v \n", msg)
+func (s *APIServer) sendRequestWithReply(msg APIMessage) ([]byte, error) {
 
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
 	enc.Encode(msg)
 
-	nc, err := nats.Connect(msg.Cfg.Server)
+	reply, err := s.nats.Request(msg.Cfg.Topic, buff.Bytes(), time.Duration(msg.Cfg.Timeout)*time.Second)
 	if err != nil {
 		return nil, err
 	}
-	defer nc.Close()
-
-	reply, err := nc.Request(msg.Cfg.Topic, buff.Bytes(), time.Duration(msg.Cfg.Timeout)*time.Second)
-	if err != nil {
-		return nil, err
-	}
-
-	nc.Drain()
 
 	return reply.Data, nil
 }

@@ -15,7 +15,7 @@ allow_compress = false
 compress_level = 5
 
 [debug]
-dump_on_error = true
+dump_on_error = false
 metrics_name = "api_gateway"
 
 [nats]

@@ -49,22 +49,22 @@ func (c *APIServer) PostV1(ctx echo.Context) error {
 	}
 
 	// Parse input command
-	cmd := strings.Split(req.Mandatory.Command, delimiter)
-	serviceName := cmd[1]
-	resourceName := cmd[2]
+	msg := strings.Split(req.Mandatory.Command, delimiter)
+	serviceName := msg[1]
+	resourceName := msg[2]
 	action := string(req.Mandatory.Action)
 
-	// fmt.Printf("**** Inputs: service - %s, resource - %s, action - %s \n", serviceName, resourceName, action)
+	fmt.Printf("**** API GW --- Inputs: service - %s, resource - %s, action - %s \n", serviceName, resourceName, action)
 	fmt.Println(params)
 
-	comm := Command{
-		service:  serviceName,
-		resource: resourceName,
-		action:   action,
-		cfg: NatsConfig{
-			timeout: c.cfg.Nats.Timeout,
-			server:  c.cfg.Nats.Server,
-			topic:   c.cfg.Nats.Topic,
+	comm := APIMessage{
+		Service:  serviceName,
+		Resource: resourceName,
+		Action:   action,
+		Cfg: NatsConfig{
+			Timeout: c.cfg.Nats.Timeout,
+			Server:  c.cfg.Nats.Server,
+			Topic:   c.cfg.Nats.Topic,
 		},
 	}
 
@@ -73,7 +73,7 @@ func (c *APIServer) PostV1(ctx echo.Context) error {
 		return sendCloudControlError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
 	}
 
-	fmt.Printf("*** Exec response: %s", string(res))
+	fmt.Printf("*** Exec response: %s \n", string(res))
 
 	return sendCloudControlError(ctx, http.StatusInternalServerError, "Failed to Execute command")
 
@@ -91,21 +91,22 @@ func sendCloudControlError(ctx echo.Context, code int, message string) error {
 }
 
 // sendRequestWithReply - sends a Cloud Control API command to subscribed executors
-func sendRequestWithReply(cmd Command) ([]byte, error) {
+func sendRequestWithReply(msg APIMessage) ([]byte, error) {
 
-	// fmt.Printf("****NATS server %s topic %s \n", cmd.cfg.server, cmd.cfg.topic)
+	// fmt.Printf("****NATS server %s topic %s \n", msg.Cfg.server, msg.Cfg.topic)
+	fmt.Printf(">>> Command: %v \n", msg)
 
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)
-	enc.Encode(cmd)
+	enc.Encode(msg)
 
-	nc, err := nats.Connect(cmd.cfg.server)
+	nc, err := nats.Connect(msg.Cfg.Server)
 	if err != nil {
 		return nil, err
 	}
 	defer nc.Close()
 
-	reply, err := nc.Request(cmd.cfg.topic, buff.Bytes(), time.Duration(cmd.cfg.timeout)*time.Second)
+	reply, err := nc.Request(msg.Cfg.Topic, buff.Bytes(), time.Duration(msg.Cfg.Timeout)*time.Second)
 	if err != nil {
 		return nil, err
 	}

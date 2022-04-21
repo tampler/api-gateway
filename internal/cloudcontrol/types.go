@@ -6,16 +6,16 @@ import (
 )
 
 type NatsConfig struct {
-	timeout int
-	server  string
-	topic   string
+	Timeout int
+	Server  string
+	Topic   string
 }
 
-type Command struct {
-	service  string
-	resource string
-	action   string
-	cfg      NatsConfig
+type APIMessage struct {
+	Service  string
+	Resource string
+	Action   string
+	Cfg      NatsConfig
 }
 
 // APIServer - top level execution engine

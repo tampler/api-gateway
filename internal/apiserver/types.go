@@ -1,4 +1,4 @@
-package cloudcontrol
+package apiserver
 
 import (
 	"github.com/nats-io/nats.go"
@@ -21,7 +21,7 @@ type NatsConfig struct {
 }
 
 // APICommand - API command
-type APICommand struct {
+type APIRequestCommand struct {
 	Service  string
 	Resource string
 	Action   string
@@ -29,7 +29,14 @@ type APICommand struct {
 }
 
 // APIMessage - message to be processed by SDK
-type APIMessage struct {
+type APIRequestMessage struct {
 	Cfg NatsConfig
-	Cmd APICommand
+	Cmd APIRequestCommand
+}
+
+// APIResponseMessage - final JSON output from SDK
+type APIResponseMessage struct {
+	Service string `json:"service"`
+	Api     string `json:"api"`
+	Data    []byte `json:"data"`
 }

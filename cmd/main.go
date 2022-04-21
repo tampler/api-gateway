@@ -18,8 +18,8 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
-	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol"
-	"github.com/neurodyne-web-services/api-gateway/internal/cloudcontrol/api"
+	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
+	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"golang.org/x/time/rate"
@@ -52,7 +52,7 @@ func main() {
 	defer nc.Close()
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := cloudcontrol.MakeAPIServer(nc, &cfg, zl)
+	cc := apiserver.MakeAPIServer(nc, &cfg, zl)
 
 	// Build Swagger API
 	swagger, err := api.GetSwagger()
@@ -153,7 +153,7 @@ func main() {
 	e.Use(oapimw.OapiRequestValidator(swagger))
 
 	// Instantiate custom validators
-	e.Validator = &cloudcontrol.CustomValidator{Validator: validator.New()}
+	e.Validator = &apiserver.CustomValidator{Validator: validator.New()}
 
 	// We now register our cloudcontrol above as the handler for the interface
 	api.RegisterHandlers(e, cc)

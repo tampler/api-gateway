@@ -1,8 +1,9 @@
-package cloudcontrol
+package apiserver
 
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -58,8 +59,8 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	action := string(req.Mandatory.Action)
 
 	// Extract API command
-	comm := APIMessage{
-		Cmd: APICommand{
+	comm := APIRequestMessage{
+		Cmd: APIRequestCommand{
 			Service:  serviceName,
 			Resource: resourceName,
 			Action:   action,
@@ -77,13 +78,37 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		return sendCloudControlError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
 	}
 
-	fmt.Printf("*** Exec response: %s \n", string(res))
+	fmt.Printf("*** Result buffer: %v \n", string(res))
 
-	return sendCloudControlError(ctx, http.StatusInternalServerError, "Failed to Execute command")
+	// Repack to the full Runner Result
+	out := APIResponseMessage{
+		Service: serviceName,
+		Api:     resourceName,
+		Data:    res,
+	}
+
+	buf, err := json.Marshal(&out)
+	if err != nil {
+		return sendCloudControlError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
+	}
+
+	// Now, we have to return the Runner response
+	err = ctx.JSONBlob(http.StatusCreated, buf)
+	if err != nil {
+		return sendCloudControlError(ctx, http.StatusInternalServerError, "Failed to send response")
+	}
+
+	// Return no error. This refers to the handler. Even if we return an HTTP
+	// error, but everything else is working properly, tell Echo that we serviced
+	// the error. We should only return errors from Echo handlers if the actual
+	// servicing of the error on the infrastructure level failed. Returning an
+	// HTTP/400 or HTTP/500 from here means Echo/HTTP are still working, so
+	// return nil.
+	return nil
 }
 
 // sendRequestWithReply - sends a Cloud Control API command to subscribed executors
-func (s *APIServer) sendRequestWithReply(msg APIMessage) ([]byte, error) {
+func (s *APIServer) sendRequestWithReply(msg APIRequestMessage) ([]byte, error) {
 
 	var buff bytes.Buffer
 	enc := gob.NewEncoder(&buff)

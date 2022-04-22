@@ -21,7 +21,7 @@ tidy:
 	@ echo "Done!"
 
 upd:
-	@ cd internal/cloudcontrol/ && go get -u && go mod tidy --compat=1.18
+	@ cd internal/apiserver/ && go get -u && go mod tidy --compat=1.18
 	@ echo "Done!"
 
 apigen:

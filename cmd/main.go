@@ -41,7 +41,7 @@ func main() {
 	// Build a global config
 	var cfg config.AppConfig
 
-	if err := cfg.AppInit(); err != nil {
+	if err := cfg.AppInit(CONFIG_NAME, CONFIG_PATH); err != nil {
 		log.Fatal("Config failed %s", err.Error())
 	}
 

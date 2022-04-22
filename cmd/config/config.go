@@ -40,10 +40,10 @@ type AppConfig struct {
 }
 
 //AppInit - reads config file
-func (cfg *AppConfig) AppInit() error {
+func (cfg *AppConfig) AppInit(name, path string) error {
 
-	viper.SetConfigName("app")
-	viper.AddConfigPath("configs")
+	viper.SetConfigName(name)
+	viper.AddConfigPath(path)
 
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("Failed to read config file")

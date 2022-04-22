@@ -73,6 +73,8 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		},
 	}
 
+	fmt.Printf("*** API Server called %v \n", comm)
+
 	res, err := s.sendRequestWithReply(comm)
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))

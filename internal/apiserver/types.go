@@ -1,23 +1,17 @@
 package apiserver
 
 import (
-	"github.com/nats-io/nats.go"
+	aj "github.com/choria-io/asyncjobs"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"go.uber.org/zap"
 )
 
 // APIServer - top level execution engine
 type APIServer struct {
-	nats *nats.Conn
 	zl   *zap.Logger
 	cfg  *config.AppConfig
-}
-
-// NatsConfig - Nats configuration
-type NatsConfig struct {
-	Timeout int
-	Server  string
-	Topic   string
+	inc  *aj.Client
+	outc *aj.Client
 }
 
 // APICommand - API command
@@ -30,7 +24,6 @@ type APIRequestCommand struct {
 
 // APIMessage - message to be processed by SDK
 type APIRequestMessage struct {
-	Cfg NatsConfig
 	Cmd APIRequestCommand
 }
 

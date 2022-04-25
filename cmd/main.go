@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/casdoor/casdoor-go-sdk/auth"
+	aj "github.com/choria-io/asyncjobs"
 	oapimw "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt"
@@ -16,7 +17,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
-	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
@@ -45,14 +45,24 @@ func main() {
 		log.Fatal("Config failed %s", err.Error())
 	}
 
-	nc, err := nats.Connect(cfg.Nats.Server)
-	if err != nil {
-		log.Fatalf("Failed to connect to NATS server: %v \n", err)
-	}
-	defer nc.Close()
+	// Ingress Async Queue Client
+	ingressClient, err := aj.NewClient(
+		aj.NatsContext("AJC"),
+		aj.BindWorkQueue("PING"),
+		aj.ClientConcurrency(10),
+		// aj.PrometheusListenPort(8089),
+		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+
+	// Egress Async Queue Client
+	egressClient, err := aj.NewClient(
+		aj.NatsContext("AJC"),
+		aj.BindWorkQueue("PONG"),
+		aj.ClientConcurrency(10),
+		// aj.PrometheusListenPort(8089),
+		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := apiserver.MakeAPIServer(nc, &cfg, zl)
+	cc := apiserver.MakeAPIServer(&cfg, zl, ingressClient, egressClient)
 
 	// Build Swagger API
 	swagger, err := api.GetSwagger()

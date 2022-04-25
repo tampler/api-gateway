@@ -1,27 +1,25 @@
 package apiserver
 
 import (
-	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
+	aj "github.com/choria-io/asyncjobs"
 	"github.com/labstack/echo/v4"
-	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
 	"go.uber.org/zap"
 )
 
 // MakeAPIServer - APIServer factory
-func MakeAPIServer(nc *nats.Conn, c *config.AppConfig, z *zap.Logger) *APIServer {
+func MakeAPIServer(c *config.AppConfig, z *zap.Logger, inc, outc *aj.Client) *APIServer {
 	srv := APIServer{
-		nats: nc,
 		zl:   z,
 		cfg:  c,
+		inc:  inc,
+		outc: outc,
 	}
 
 	return &srv
@@ -66,11 +64,6 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 			Action:   action,
 			Params:   params,
 		},
-		Cfg: NatsConfig{
-			Timeout: s.cfg.Nats.Timeout,
-			Server:  s.cfg.Nats.Server,
-			Topic:   s.cfg.Nats.Topic,
-		},
 	}
 
 	fmt.Printf("*** API Server called %v \n", comm)
@@ -110,14 +103,5 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 // sendRequestWithReply - sends a Cloud Control API command to subscribed executors
 func (s *APIServer) sendRequestWithReply(msg APIRequestMessage) ([]byte, error) {
 
-	var buff bytes.Buffer
-	enc := gob.NewEncoder(&buff)
-	enc.Encode(msg)
-
-	reply, err := s.nats.Request(msg.Cfg.Topic, buff.Bytes(), time.Duration(msg.Cfg.Timeout)*time.Second)
-	if err != nil {
-		return nil, err
-	}
-
-	return reply.Data, nil
+	return nil, nil
 }

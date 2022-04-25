@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
-	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
@@ -35,12 +34,6 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 		log.Fatal("Config failed" + err.Error())
 	}
 
-	nc, err := nats.Connect(cfg.Nats.Server)
-	if err != nil {
-		log.Fatalf("Failed to connect to NATS server: %v \n", err)
-	}
-	defer nc.Close()
-
 	swagger, err := api.GetSwagger()
 	if err != nil {
 		return nil, fail.Error500(err.Error())
@@ -51,7 +44,7 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	swagger.Servers = nil
 
 	// Create an instance of our handler which satisfies the generated interface
-	cloudcontrol := MakeAPIServer(nc, &cfg, zl)
+	cloudcontrol := MakeAPIServer(&cfg, zl, nil, nil)
 
 	// This is how you set up a basic Echo router
 	e := echo.New()

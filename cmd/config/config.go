@@ -6,13 +6,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-//NatsConfig - config for Nats client
-type NatsConfig struct {
-	Server  string
-	Topic   string
-	Timeout int
-}
-
 //HttpConfig - config for Http and JWT server
 type HttpConfig struct {
 	Port          int
@@ -35,7 +28,6 @@ type DebugConfig struct {
 //AppConfig - top level config
 type AppConfig struct {
 	Http  HttpConfig
-	Nats  NatsConfig
 	Debug DebugConfig
 }
 
@@ -63,11 +55,6 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 	// debug
 	cfg.Debug.DumpOnError = viper.GetBool("debug.dump_on_error")
 	cfg.Debug.MetricsName = viper.GetString("debug.metrics_name")
-
-	// nats
-	cfg.Nats.Server = viper.GetString("nats.server")
-	cfg.Nats.Topic = viper.GetString("nats.topic")
-	cfg.Nats.Timeout = viper.GetInt("nats.timeout")
 
 	return nil
 }

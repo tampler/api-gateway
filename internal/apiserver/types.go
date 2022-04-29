@@ -8,10 +8,11 @@ import (
 
 // APIServer - top level execution engine
 type APIServer struct {
-	zl   *zap.Logger
-	cfg  *config.AppConfig
-	inc  *aj.Client
-	outc *aj.Client
+	zl     *zap.Logger
+	cfg    *config.AppConfig
+	ping   *aj.Client
+	pong   *aj.Client
+	router *aj.Mux
 }
 
 // APICommand - API command
@@ -32,4 +33,8 @@ type APIResponseMessage struct {
 	Service string `json:"service"`
 	Api     string `json:"api"`
 	Data    []byte `json:"data"`
+}
+
+type AsyncProcessor interface {
+	Process() (interface{}, error)
 }

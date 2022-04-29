@@ -1,10 +1,12 @@
 package apiserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/labstack/echo/v4"
@@ -14,12 +16,13 @@ import (
 )
 
 // MakeAPIServer - APIServer factory
-func MakeAPIServer(c *config.AppConfig, z *zap.Logger, inc, outc *aj.Client) *APIServer {
+func MakeAPIServer(c *config.AppConfig, z *zap.Logger, inc, outc *aj.Client, rtr *aj.Mux) *APIServer {
 	srv := APIServer{
-		zl:   z,
-		cfg:  c,
-		inc:  inc,
-		outc: outc,
+		zl:     z,
+		cfg:    c,
+		ping:   inc,
+		pong:   outc,
+		router: rtr,
 	}
 
 	return &srv
@@ -57,7 +60,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	action := string(req.Mandatory.Action)
 
 	// Extract API command
-	comm := APIRequestMessage{
+	command := APIRequestMessage{
 		Cmd: APIRequestCommand{
 			Service:  serviceName,
 			Resource: resourceName,
@@ -66,9 +69,9 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		},
 	}
 
-	fmt.Printf("*** API Server called %v \n", comm)
+	fmt.Printf("*** API Server called %v \n", command)
 
-	res, err := s.sendRequestWithReply(comm)
+	res, err := s.enqueueCommand(command)
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
 	}
@@ -100,8 +103,18 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	return nil
 }
 
-// sendRequestWithReply - sends a Cloud Control API command to subscribed executors
-func (s *APIServer) sendRequestWithReply(msg APIRequestMessage) ([]byte, error) {
+// enqueueCommand - sends a Cloud Control API command to subscribed executors
+func (s *APIServer) enqueueCommand(msg APIRequestMessage) ([]byte, error) {
+
+	task, err := aj.NewTask("sdk::ec2", msg.Cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.ping.EnqueueTask(context.Background(), task)
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }

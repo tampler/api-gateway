@@ -1,9 +1,11 @@
 # Full app config
+[auth]
+auth_enabled = false
 
 [http]
-port = 8084
 auth_file = "/tmp/app.json"
 pem_file = "/tmp/token_jwt_key.pem"
+port = 8084
 
 body_limit = "4K"
 max_rps = 20
@@ -20,5 +22,5 @@ metrics_name = "api_gateway"
 
 [nats]
 server = "nats://hyp:4222"
-topic = "command.ingress"
 timeout = 25
+topic = "command.ingress"

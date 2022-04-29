@@ -46,23 +46,34 @@ func main() {
 	}
 
 	// Ingress Async Queue Client
-	ingressClient, err := aj.NewClient(
+	pingClient, err := aj.NewClient(
 		aj.NatsContext("AJC"),
 		aj.BindWorkQueue("PING"),
 		aj.ClientConcurrency(10),
 		// aj.PrometheusListenPort(8089),
 		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+	if pingClient == nil {
+		log.Fatal("Failed to config a PING client")
+	}
 
 	// Egress Async Queue Client
-	egressClient, err := aj.NewClient(
+	pongClient, err := aj.NewClient(
 		aj.NatsContext("AJC"),
 		aj.BindWorkQueue("PONG"),
 		aj.ClientConcurrency(10),
 		// aj.PrometheusListenPort(8089),
 		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+	if pingClient == nil {
+		log.Fatal("Failed to config a PONG client")
+	}
+
+	router := aj.NewTaskRouter()
+	if pingClient == nil {
+		log.Fatal("Failed to config a Router")
+	}
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := apiserver.MakeAPIServer(&cfg, zl, ingressClient, egressClient)
+	cc := apiserver.MakeAPIServer(&cfg, zl, pingClient, pongClient, router)
 
 	// Build Swagger API
 	swagger, err := api.GetSwagger()
@@ -82,38 +93,40 @@ func main() {
 	p := prometheus.NewPrometheus(cfg.Debug.MetricsName, nil)
 	p.Use(e)
 
-	// Read PEM file
-	pemData, err := ioutil.ReadFile(cfg.Http.PemFile)
-	if err != nil {
-		log.Fatalf("Failed to read the CA file: - %s", err)
-	}
-
-	// Read Auth config file
-	authData, err := ioutil.ReadFile(cfg.Http.AuthFile)
-	if err != nil {
-		log.Fatalf("Failed to read the Auth config file: - %s", err)
-	}
-
-	// JWT validator
-	r := e.Group("/")
-	{
-		config := middleware.JWTConfig{
-			ParseTokenFunc: func(token string, c echo.Context) (interface{}, error) {
-				err := njwt.InitAuth(authData, pemData)
-				if err != nil {
-					return nil, err
-				}
-
-				claims, err := auth.ParseJwtToken(token)
-				if err != nil {
-					return nil, errors.New("failed to parse token")
-				}
-
-				return claims.AccessToken, nil
-			},
+	if cfg.Http.AuthEnabled {
+		// Read PEM file
+		pemData, err := ioutil.ReadFile(cfg.Http.PemFile)
+		if err != nil {
+			log.Fatalf("Failed to read the CA file: - %s", err)
 		}
-		e.Use(middleware.JWTWithConfig(config))
-		r.GET("", restricted)
+
+		// Read Auth config file
+		authData, err := ioutil.ReadFile(cfg.Http.AuthFile)
+		if err != nil {
+			log.Fatalf("Failed to read the Auth config file: - %s", err)
+		}
+
+		// JWT validator
+		r := e.Group("/")
+		{
+			config := middleware.JWTConfig{
+				ParseTokenFunc: func(token string, c echo.Context) (interface{}, error) {
+					err := njwt.InitAuth(authData, pemData)
+					if err != nil {
+						return nil, err
+					}
+
+					claims, err := auth.ParseJwtToken(token)
+					if err != nil {
+						return nil, errors.New("failed to parse token")
+					}
+
+					return claims.AccessToken, nil
+				},
+			}
+			e.Use(middleware.JWTWithConfig(config))
+			r.GET("", restricted)
+		}
 	}
 
 	// Set Request Limiter

@@ -9,6 +9,7 @@ import (
 //HttpConfig - config for Http and JWT server
 type HttpConfig struct {
 	Port          int
+	AuthEnabled   bool
 	PemFile       string
 	AuthFile      string
 	MaxRPS        int
@@ -40,6 +41,8 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("Failed to read config file")
 	}
+	// auth
+	cfg.Http.AuthEnabled = viper.GetBool("auth.auth_enabled")
 
 	// http setup
 	cfg.Http.Port = viper.GetInt("http.port")

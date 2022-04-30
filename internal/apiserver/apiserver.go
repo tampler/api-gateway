@@ -63,18 +63,48 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	fmt.Printf("*** API Server called %v \n", cmd)
 
-	task, err := aj.NewTask(topic, cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
+	task, err := aj.NewTask(topic, cmd.Cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
 	if err != nil {
-		return err
+		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to create a task: %v \n", err))
 	}
 
+	// Submit a task into the PING queue
 	err = s.ping.client.EnqueueTask(context.Background(), task)
 	if err != nil {
-		return err
+		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task"))
 	}
 
+	// Create a PONG handler
+	err = s.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
+
+		var cmd APIRequestCommand
+
+		err := json.Unmarshal(t.Payload, &cmd)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Printf("*** RESULT PONG: processing a job ID %s\n", cmd)
+
+		return nil, nil
+	})
 	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
+		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch a PONG task"))
+	}
+
+	ch := make(chan error, 2)
+
+	go s.ping.Run(context.Background(), ch)
+	go s.pong.Run(context.Background(), ch)
+
+	pingErr, pongErr := <-ch, <-ch
+
+	if pingErr != nil {
+		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PING manager: %v", pingErr.Error()))
+	}
+
+	if pongErr != nil {
+		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PONG manager: %v", pongErr.Error()))
 	}
 
 	// Repack to the full Runner Result

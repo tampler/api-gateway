@@ -6,17 +6,33 @@ import (
 	"go.uber.org/zap"
 )
 
+type QueueManager struct {
+	client *aj.Client
+	router *aj.Mux
+}
+
 // APIServer - top level execution engine
 type APIServer struct {
-	zl     *zap.Logger
-	cfg    *config.AppConfig
-	ping   *aj.Client
-	pong   *aj.Client
-	router *aj.Mux
+	zl   *zap.Logger
+	cfg  *config.AppConfig
+	ping QueueManager
+	pong QueueManager
+}
+
+// MakeAPIServer - APIServer factory
+func MakeAPIServer(c *config.AppConfig, z *zap.Logger, pingC, pongC *aj.Client, pingR, pongR *aj.Mux) *APIServer {
+	srv := APIServer{
+		zl:   z,
+		cfg:  c,
+		ping: QueueManager{client: pingC, router: pingR},
+		pong: QueueManager{client: pongC, router: pongR},
+	}
+	return &srv
 }
 
 // APICommand - API command
 type APIRequestCommand struct {
+	JobID    string
 	Service  string
 	Resource string
 	Action   string
@@ -33,8 +49,4 @@ type APIResponseMessage struct {
 	Service string `json:"service"`
 	Api     string `json:"api"`
 	Data    []byte `json:"data"`
-}
-
-type AsyncProcessor interface {
-	Process() (interface{}, error)
 }

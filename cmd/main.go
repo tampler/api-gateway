@@ -52,8 +52,14 @@ func main() {
 		aj.ClientConcurrency(10),
 		// aj.PrometheusListenPort(8089),
 		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+
 	if pingClient == nil {
 		log.Fatal("Failed to config a PING client")
+	}
+
+	pingRouter := aj.NewTaskRouter()
+	if pingClient == nil {
+		log.Fatal("Failed to config a Router")
 	}
 
 	// Egress Async Queue Client
@@ -63,17 +69,18 @@ func main() {
 		aj.ClientConcurrency(10),
 		// aj.PrometheusListenPort(8089),
 		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+
 	if pingClient == nil {
 		log.Fatal("Failed to config a PONG client")
 	}
 
-	router := aj.NewTaskRouter()
+	pongRouter := aj.NewTaskRouter()
 	if pingClient == nil {
 		log.Fatal("Failed to config a Router")
 	}
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := apiserver.MakeAPIServer(&cfg, zl, pingClient, pongClient, router)
+	cc := apiserver.MakeAPIServer(&cfg, zl, pingClient, pongClient, pingRouter, pongRouter)
 
 	// Build Swagger API
 	swagger, err := api.GetSwagger()

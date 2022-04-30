@@ -9,24 +9,15 @@ import (
 	"time"
 
 	aj "github.com/choria-io/asyncjobs"
+
 	"github.com/labstack/echo/v4"
-	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
-	"go.uber.org/zap"
+	uuid "github.com/satori/go.uuid"
 )
 
-// MakeAPIServer - APIServer factory
-func MakeAPIServer(c *config.AppConfig, z *zap.Logger, inc, outc *aj.Client, rtr *aj.Mux) *APIServer {
-	srv := APIServer{
-		zl:     z,
-		cfg:    c,
-		ping:   inc,
-		pong:   outc,
-		router: rtr,
-	}
-
-	return &srv
-}
+const (
+	topic = "sdk::ec2"
+)
 
 func (s *APIServer) GetMetrics(ctx echo.Context) error {
 	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
@@ -60,8 +51,9 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	action := string(req.Mandatory.Action)
 
 	// Extract API command
-	command := APIRequestMessage{
+	cmd := APIRequestMessage{
 		Cmd: APIRequestCommand{
+			JobID:    uuid.NewV4().String(),
 			Service:  serviceName,
 			Resource: resourceName,
 			Action:   action,
@@ -69,9 +61,18 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		},
 	}
 
-	fmt.Printf("*** API Server called %v \n", command)
+	fmt.Printf("*** API Server called %v \n", cmd)
 
-	res, err := s.enqueueCommand(command)
+	task, err := aj.NewTask(topic, cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
+	if err != nil {
+		return err
+	}
+
+	err = s.ping.client.EnqueueTask(context.Background(), task)
+	if err != nil {
+		return err
+	}
+
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("API error: %v", err))
 	}
@@ -80,7 +81,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	out := APIResponseMessage{
 		Service: serviceName,
 		Api:     resourceName,
-		Data:    res,
+		Data:    nil,
 	}
 
 	buf, err := json.Marshal(&out)
@@ -101,20 +102,4 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	// HTTP/400 or HTTP/500 from here means Echo/HTTP are still working, so
 	// return nil.
 	return nil
-}
-
-// enqueueCommand - sends a Cloud Control API command to subscribed executors
-func (s *APIServer) enqueueCommand(msg APIRequestMessage) ([]byte, error) {
-
-	task, err := aj.NewTask("sdk::ec2", msg.Cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.ping.EnqueueTask(context.Background(), task)
-	if err != nil {
-		return nil, err
-	}
-
-	return nil, nil
 }

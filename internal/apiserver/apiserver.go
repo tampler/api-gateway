@@ -19,6 +19,8 @@ const (
 	topic = "sdk::ec2"
 )
 
+type ContextMap = map[string]echo.Context
+
 func (s *APIServer) GetMetrics(ctx echo.Context) error {
 	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
@@ -61,6 +63,12 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		},
 	}
 
+	// var cmap ContextMap
+
+	// Store context for further user
+	// cmap[cmd.Cmd.JobID] = ctx
+	echoCTX := &ctx
+
 	fmt.Printf("*** API Server called %v \n", cmd)
 
 	task, err := aj.NewTask(topic, cmd.Cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
@@ -77,14 +85,20 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	// Create a PONG handler
 	err = s.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
 
-		var cmd APIRequestCommand
+		// bytes, err := decodeJSONBytes(t.Payload)
+		// encData, err := jsonparser.GetString(t.Payload)
+		// if err != nil {
+		// 	return nil, err
+		// }
 
-		err := json.Unmarshal(t.Payload, &cmd)
+		// str, _ := base64.StdEncoding.DecodeString(string(encData))
+
+		// fmt.Printf("*** PONG API Response: %v\n", string(str))
+
+		err = sendResponse(echoCTX, t.Payload, serviceName, resourceName)
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Printf("*** RESULT PONG: processing a job ID %s\n", cmd)
 
 		return nil, nil
 	})
@@ -107,23 +121,32 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PONG manager: %v", pongErr.Error()))
 	}
 
+	return nil
+}
+
+func sendResponse(ctx *echo.Context, bytes []byte, service, resource string) error {
+
 	// Repack to the full Runner Result
 	out := APIResponseMessage{
-		Service: serviceName,
-		Api:     resourceName,
-		Data:    nil,
+		Service: service,
+		Api:     resource,
+		Data:    bytes,
 	}
 
 	buf, err := json.Marshal(&out)
 	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
+		return sendAPIError(*ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
 	}
 
+	fmt.Printf("*** Sending JSON BLOB for context %v \n", *ctx)
+
 	// Now, we have to return the Runner response
-	err = ctx.JSONBlob(http.StatusCreated, buf)
+	err = (*ctx).JSONBlob(http.StatusCreated, buf)
 	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to send response")
+		return sendAPIError(*ctx, http.StatusInternalServerError, "Failed to send response")
 	}
+
+	fmt.Printf("*** Sending JSON BLOB Done \n")
 
 	// Return no error. This refers to the handler. Even if we return an HTTP
 	// error, but everything else is working properly, tell Echo that we serviced

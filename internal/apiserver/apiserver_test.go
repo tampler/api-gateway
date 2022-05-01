@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -47,7 +48,7 @@ func TestAcc_create(t *testing.T) {
 			req.Command = d.command
 			req.Params = d.params
 
-			res, err := req.MakeRequest()
+			res, err := req.MakeRequest(context.Background())
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
 			assert.Equal(t, http.StatusCreated, res.StatusCode())
 		})

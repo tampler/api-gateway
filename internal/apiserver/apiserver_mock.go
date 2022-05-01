@@ -3,6 +3,7 @@ package apiserver
 import (
 	"fmt"
 
+	aj "github.com/choria-io/asyncjobs"
 	oapimw "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -42,9 +43,43 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// Clear out the servers array in the swagger spec, that skips validating
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
+	// Ingress Async Queue Client
+
+	pingClient, err := aj.NewClient(
+		aj.NatsContext("AJC"),
+		aj.BindWorkQueue("PING"),
+		aj.ClientConcurrency(10),
+		// aj.PrometheusListenPort(8089),
+		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+
+	if pingClient == nil {
+		log.Fatal("Failed to config a PING client")
+	}
+
+	pingRouter := aj.NewTaskRouter()
+	if pingClient == nil {
+		log.Fatal("Failed to config a Router")
+	}
+
+	// Egress Async Queue Client
+	pongClient, err := aj.NewClient(
+		aj.NatsContext("AJC"),
+		aj.BindWorkQueue("PONG"),
+		aj.ClientConcurrency(10),
+		// aj.PrometheusListenPort(8089),
+		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+
+	if pingClient == nil {
+		log.Fatal("Failed to config a PONG client")
+	}
+
+	pongRouter := aj.NewTaskRouter()
+	if pingClient == nil {
+		log.Fatal("Failed to config a Router")
+	}
 
 	// Create an instance of our handler which satisfies the generated interface
-	cloudcontrol := MakeAPIServer(&cfg, zl, nil, nil)
+	cloudcontrol := MakeAPIServer(&cfg, zl, pingClient, pongClient, pingRouter, pongRouter)
 
 	// This is how you set up a basic Echo router
 	e := echo.New()

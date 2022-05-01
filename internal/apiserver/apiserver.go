@@ -1,157 +1,28 @@
 package apiserver
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"strings"
-	"time"
-
 	aj "github.com/choria-io/asyncjobs"
-
-	"github.com/labstack/echo/v4"
-	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
-	uuid "github.com/satori/go.uuid"
+	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 )
 
-const (
-	topic = "sdk::ec2"
-)
+func BuildQueueManger(queueName string) (QueueManager, error) {
+	var empty QueueManager
 
-func (s *APIServer) GetMetrics(ctx echo.Context) error {
-	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
-}
+	client, err := aj.NewClient(
+		aj.NatsContext("AJC"),
+		aj.BindWorkQueue(queueName),
+		aj.ClientConcurrency(10),
+		// aj.PrometheusListenPort(8089),
+		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
 
-func (s *APIServer) PostV1(ctx echo.Context) error {
-
-	fmt.Printf("*** INput context: %v\n", ctx)
-
-	// Extract API request from REST
-	var req api.Request
-
-	err := ctx.Bind(&req)
 	if err != nil {
-		return sendAPIError(ctx, http.StatusBadRequest, "Failed to parse input API request")
+		return empty, err
 	}
 
-	// Validate request fields
-	if err = ctx.Validate(req.Mandatory.Command); err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, err.Error())
+	rtr := aj.NewTaskRouter()
+	if rtr == nil {
+		return empty, fail.Error500("Failed to create a queue router")
 	}
 
-	var params []string
-
-	if req.Options.Params != nil {
-		params = *req.Options.Params
-	}
-
-	// Parse input command
-	msg := strings.Split(req.Mandatory.Command, delimiter)
-	serviceName := msg[1]
-	resourceName := msg[2]
-	action := string(req.Mandatory.Action)
-
-	// Extract API command
-	cmd := APIRequestMessage{
-		Cmd: APIRequestCommand{
-			JobID:    uuid.NewV4().String(),
-			Service:  serviceName,
-			Resource: resourceName,
-			Action:   action,
-			Params:   params,
-		},
-	}
-
-	echoCTX := ctx
-	backCTX := context.Background()
-
-	fmt.Printf("*** API Server called %v \n", cmd)
-
-	task, err := aj.NewTask(topic, cmd.Cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
-	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to create a task: %v \n", err))
-	}
-
-	// Submit a task into the PING queue
-	err = s.ping.client.EnqueueTask(backCTX, task)
-	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task"))
-	}
-
-	// Create a PONG handler
-	err = s.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
-
-		// bytes, err := decodeJSONBytes(t.Payload)
-		// encData, err := jsonparser.GetString(t.Payload)
-		// if err != nil {
-		// 	return nil, err
-		// }
-
-		// str, _ := base64.StdEncoding.DecodeString(string(encData))
-
-		fmt.Printf("*** PONG API Response: %v\n", string(t.Payload))
-
-		err = sendResponse(echoCTX, t.Payload, serviceName, resourceName)
-		if err != nil {
-			return nil, err
-		}
-
-		fmt.Printf("*** PONG response processed \n")
-
-		return nil, nil
-	})
-	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch a PONG task"))
-	}
-
-	fmt.Printf("**** Running outside handler \n")
-
-	ch := make(chan error, 2)
-
-	go s.ping.Run(backCTX, ch)
-	go s.pong.Run(backCTX, ch)
-
-	pingErr, pongErr := <-ch, <-ch
-
-	if pingErr != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PING manager: %v", pingErr.Error()))
-	}
-
-	if pongErr != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PONG manager: %v", pongErr.Error()))
-	}
-
-	return nil
-}
-
-func sendResponse(ctx echo.Context, bytes []byte, service, resource string) error {
-
-	// Repack to the full Runner Result
-	out := APIResponseMessage{
-		Service: service,
-		Api:     resource,
-		Data:    bytes,
-	}
-
-	buf, err := json.Marshal(&out)
-	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
-	}
-
-	fmt.Printf("*** Sending buf: %v\n", string(buf))
-
-	// Now, we have to return the Runner response
-	err = ctx.JSONBlob(http.StatusCreated, buf)
-	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to send response")
-	}
-
-	// Return no error. This refers to the handler. Even if we return an HTTP
-	// error, but everything else is working properly, tell Echo that we serviced
-	// the error. We should only return errors from Echo handlers if the actual
-	// servicing of the error on the infrastructure level failed. Returning an
-	// HTTP/400 or HTTP/500 from here means Echo/HTTP are still working, so
-	// return nil.
-	return nil
+	return MakeQueueManager(client, rtr), nil
 }

@@ -14,6 +14,11 @@ type QueueManager struct {
 	router *aj.Mux
 }
 
+// MakeQueueManager - factory for QueueManager
+func MakeQueueManager(c *aj.Client, r *aj.Mux) QueueManager {
+	return QueueManager{client: c, router: r}
+}
+
 // Run - runs the client and returns an erorr in a channel
 func (m QueueManager) Run(ctx context.Context, c chan error) {
 	err := m.client.Run(ctx, m.router)
@@ -29,12 +34,12 @@ type APIServer struct {
 }
 
 // MakeAPIServer - APIServer factory
-func MakeAPIServer(c *config.AppConfig, z *zap.Logger, pingC, pongC *aj.Client, pingR, pongR *aj.Mux) *APIServer {
+func MakeAPIServer(c *config.AppConfig, z *zap.Logger, ping, pong QueueManager) *APIServer {
 	srv := APIServer{
 		zl:   z,
 		cfg:  c,
-		ping: QueueManager{client: pingC, router: pingR},
-		pong: QueueManager{client: pongC, router: pongR},
+		ping: ping,
+		pong: pong,
 	}
 	return &srv
 }

@@ -3,7 +3,6 @@ package apiserver
 import (
 	"fmt"
 
-	aj "github.com/choria-io/asyncjobs"
 	oapimw "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -43,43 +42,20 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// Clear out the servers array in the swagger spec, that skips validating
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
-	// Ingress Async Queue Client
 
-	pingClient, err := aj.NewClient(
-		aj.NatsContext("AJC"),
-		aj.BindWorkQueue("PING"),
-		aj.ClientConcurrency(10),
-		// aj.PrometheusListenPort(8089),
-		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
-
-	if pingClient == nil {
-		log.Fatal("Failed to config a PING client")
+	// Build a Queue Managers for PING and PONG
+	pingMgr, err := BuildQueueManger("PING")
+	if err != nil {
+		log.Fatalf("Failed to create a queue: %v\n", err)
 	}
 
-	pingRouter := aj.NewTaskRouter()
-	if pingClient == nil {
-		log.Fatal("Failed to config a Router")
-	}
-
-	// Egress Async Queue Client
-	pongClient, err := aj.NewClient(
-		aj.NatsContext("AJC"),
-		aj.BindWorkQueue("PONG"),
-		aj.ClientConcurrency(10),
-		// aj.PrometheusListenPort(8089),
-		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
-
-	if pingClient == nil {
-		log.Fatal("Failed to config a PONG client")
-	}
-
-	pongRouter := aj.NewTaskRouter()
-	if pingClient == nil {
-		log.Fatal("Failed to config a Router")
+	pongMgr, err := BuildQueueManger("PONG")
+	if err != nil {
+		log.Fatalf("Failed to create a queue: %v\n", err)
 	}
 
 	// Create an instance of our handler which satisfies the generated interface
-	cloudcontrol := MakeAPIServer(&cfg, zl, pingClient, pongClient, pingRouter, pongRouter)
+	cc := MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
 
 	// This is how you set up a basic Echo router
 	e := echo.New()
@@ -94,8 +70,8 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// Instantiate custom validators
 	e.Validator = &CustomValidator{Validator: validator.New()}
 
-	// We now register our cloudcontrol above as the handler for the interface
-	api.RegisterHandlers(e, cloudcontrol)
+	// We now register our cc above as the handler for the interface
+	api.RegisterHandlers(e, cc)
 
 	return e, nil
 }

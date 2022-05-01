@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/casdoor/casdoor-go-sdk/auth"
-	aj "github.com/choria-io/asyncjobs"
 	oapimw "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt"
@@ -45,42 +44,19 @@ func main() {
 		log.Fatal("Config failed %s", err.Error())
 	}
 
-	// Ingress Async Queue Client
-	pingClient, err := aj.NewClient(
-		aj.NatsContext("AJC"),
-		aj.BindWorkQueue("PING"),
-		aj.ClientConcurrency(10),
-		// aj.PrometheusListenPort(8089),
-		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
-
-	if pingClient == nil {
-		log.Fatal("Failed to config a PING client")
+	// Build a Queue Managers for PING and PONG
+	pingMgr, err := apiserver.BuildQueueManger("PING")
+	if err != nil {
+		log.Fatal("Failed to create a queue: %v\n", err)
 	}
 
-	pingRouter := aj.NewTaskRouter()
-	if pingClient == nil {
-		log.Fatal("Failed to config a Router")
-	}
-
-	// Egress Async Queue Client
-	pongClient, err := aj.NewClient(
-		aj.NatsContext("AJC"),
-		aj.BindWorkQueue("PONG"),
-		aj.ClientConcurrency(10),
-		// aj.PrometheusListenPort(8089),
-		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
-
-	if pingClient == nil {
-		log.Fatal("Failed to config a PONG client")
-	}
-
-	pongRouter := aj.NewTaskRouter()
-	if pingClient == nil {
-		log.Fatal("Failed to config a Router")
+	pongMgr, err := apiserver.BuildQueueManger("PONG")
+	if err != nil {
+		log.Fatal("Failed to create a queue: %v\n", err)
 	}
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := apiserver.MakeAPIServer(&cfg, zl, pingClient, pongClient, pingRouter, pongRouter)
+	cc := apiserver.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
 
 	// Build Swagger API
 	swagger, err := api.GetSwagger()

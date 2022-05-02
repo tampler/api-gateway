@@ -4,9 +4,12 @@ import "testing"
 
 func Test_observer(t *testing.T) {
 
-	testObserver1 := &TestObserver{1, nil}
-	testObserver2 := &TestObserver{2, nil}
-	testObserver3 := &TestObserver{3, nil}
+	ch := make(chan bool, 2)
+	defer close(ch)
+
+	testObserver1 := &TestObserver{1, nil, ch}
+	testObserver2 := &TestObserver{2, nil, ch}
+	testObserver3 := &TestObserver{3, nil, ch}
 	publisher := Publisher{}
 
 	t.Run("AddSubscriber", func(t *testing.T) {
@@ -43,5 +46,6 @@ func Test_observer(t *testing.T) {
 				t.Error()
 			}
 		}
+		close(ch)
 	})
 }

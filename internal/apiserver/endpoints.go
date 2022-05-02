@@ -2,15 +2,19 @@ package apiserver
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/buger/jsonparser"
 	aj "github.com/choria-io/asyncjobs"
 
 	"github.com/labstack/echo/v4"
+	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
 	uuid "github.com/satori/go.uuid"
 )
@@ -28,8 +32,10 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	cc := ctx.(*MyContext)
 	cc.Foo()
 
+	done := make(chan bool, 2)
+
 	// Add observer
-	observ := TestObserver{222, nil}
+	observ := TestObserver{222, nil, done}
 
 	cc.pub.AddSubscriber(&observ)
 
@@ -82,6 +88,13 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task"))
 	}
 
+	select {
+	case <-time.After(10 * time.Second):
+		log.Fatal("*** FAIL: to execute command")
+	case <-done:
+		log.Printf("*** Message: %v\n", string(observ.Message))
+	}
+
 	err = sendResponse(ctx, observ.Message, serviceName, resourceName)
 
 	return nil
@@ -110,4 +123,15 @@ func sendResponse(ctx echo.Context, data []byte, service, resource string) error
 	}
 
 	return nil
+}
+
+func decodeJSONBytes(bytes []byte) ([]byte, error) {
+
+	// Base-64 encoded string after marshalling []byte
+	encData, err := jsonparser.GetString(bytes)
+	if err != nil {
+		return nil, fail.Error500(err.Error())
+	}
+
+	return base64.StdEncoding.DecodeString(string(encData))
 }

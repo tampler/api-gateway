@@ -72,6 +72,18 @@ func main() {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
+	pub := apiserver.MakePublisher(pongMgr)
+
+	pub.AddHandlers()
+
+	// Add custom context
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cc := apiserver.MakeMyContext(c, &pub)
+			return next(cc)
+		}
+	})
+
 	// Enable metrics middleware
 	p := prometheus.NewPrometheus(cfg.Debug.MetricsName, nil)
 	p.Use(e)

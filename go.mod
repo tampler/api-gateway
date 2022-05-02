@@ -3,6 +3,7 @@ module github.com/neurodyne-web-services/api-gateway
 go 1.18
 
 require (
+	github.com/buger/jsonparser v1.1.1
 	github.com/casdoor/casdoor-go-sdk v0.4.0
 	github.com/choria-io/asyncjobs v0.0.7
 	github.com/deepmap/oapi-codegen v1.10.1

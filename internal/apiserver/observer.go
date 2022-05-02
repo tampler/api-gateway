@@ -13,6 +13,10 @@ type MyContext struct {
 	pub *Publisher
 }
 
+func MakeMyContext(c echo.Context, pub *Publisher) *MyContext {
+	return &MyContext{c, pub}
+}
+
 func (c *MyContext) Foo() {
 	println("foo")
 }
@@ -30,14 +34,27 @@ type Publisher struct {
 	pong QueueManager
 }
 
+func MakePublisher(m QueueManager) Publisher {
+	return Publisher{pong: m}
+}
+
 func (p *Publisher) AddHandlers() error {
 
 	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
 		fmt.Printf("*** PONG handler for task %v\n", t.ID)
 
+		data, err := decodeJSONBytes(t.Payload)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Printf(">>>> Started NOTIFY... \n")
+
 		p.NotifyObservers(BusEvent{
-			data: t.Payload,
+			data: data,
 		})
+
+		fmt.Printf(">>>> Exit NOTIFY... \n")
 
 		return nil, nil
 	})
@@ -84,9 +101,11 @@ func (p *Publisher) NotifyObservers(ev BusEvent) {
 type TestObserver struct {
 	ID      int
 	Message []byte
+	done    chan bool
 }
 
 func (p *TestObserver) Notify(ev BusEvent) {
 	fmt.Printf("Obderver %d: message '%s' received \n", p.ID, ev.data)
 	p.Message = ev.data
+	p.done <- true
 }

@@ -60,9 +60,7 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
-	pub := Publisher{
-		pong: pongMgr,
-	}
+	pub := MakePublisher(pongMgr)
 
 	pub.AddHandlers()
 

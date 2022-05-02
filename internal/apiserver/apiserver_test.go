@@ -17,7 +17,7 @@ const (
 	portEnd   = 9085
 )
 
-func TestAcc_create(t *testing.T) {
+func Test_server(t *testing.T) {
 	port := rand.Intn(portEnd-portStart) + portStart
 
 	// Launch Server

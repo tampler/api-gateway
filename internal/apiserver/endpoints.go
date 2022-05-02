@@ -25,6 +25,14 @@ func (s *APIServer) GetMetrics(ctx echo.Context) error {
 
 func (s *APIServer) PostV1(ctx echo.Context) error {
 
+	cc := ctx.(*MyContext)
+	cc.Foo()
+
+	// Add observer
+	observ := TestObserver{222, ""}
+
+	cc.pub.AddSubscriber(&observ)
+
 	// Extract API request from REST
 	var req api.Request
 
@@ -61,9 +69,6 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		},
 	}
 
-	echoCTX := ctx
-	backCTX := context.Background()
-
 	fmt.Printf("*** API Server called %v \n", cmd)
 
 	task, err := aj.NewTask(topic, cmd.Cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
@@ -72,80 +77,53 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	}
 
 	// Submit a task into the PING queue
-	err = s.ping.client.EnqueueTask(backCTX, task)
+	err = s.ping.client.EnqueueTask(context.Background(), task)
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task"))
 	}
 
-	// Create a PONG handler
-	err = s.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
+	// Block after creating a PING event
+	time.Sleep(5 * time.Second)
 
-		// bytes, err := decodeJSONBytes(t.Payload)
-		// encData, err := jsonparser.GetString(t.Payload)
-		// if err != nil {
-		// 	return nil, err
-		// }
+	// ch := make(chan error, 2)
 
-		// str, _ := base64.StdEncoding.DecodeString(string(encData))
+	// go s.ping.Run(backCTX, ch)
+	// go s.pong.Run(backCTX, ch)
 
-		fmt.Printf("*** PONG API Response: %v\n", string(t.Payload))
+	// pingErr, pongErr := <-ch, <-ch
 
-		err = sendResponse(echoCTX, t.Payload, serviceName, resourceName)
-		if err != nil {
-			return nil, err
-		}
+	// if pingErr != nil {
+	// 	return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PING manager: %v", pingErr.Error()))
+	// }
 
-		return nil, nil
-	})
-	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch a PONG task"))
-	}
-
-	ch := make(chan error, 2)
-
-	go s.ping.Run(backCTX, ch)
-	go s.pong.Run(backCTX, ch)
-
-	pingErr, pongErr := <-ch, <-ch
-
-	if pingErr != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PING manager: %v", pingErr.Error()))
-	}
-
-	if pongErr != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PONG manager: %v", pongErr.Error()))
-	}
+	// if pongErr != nil {
+	// 	return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PONG manager: %v", pongErr.Error()))
+	// }
 
 	return nil
 }
 
-func sendResponse(ctx echo.Context, bytes []byte, service, resource string) error {
+func sendResponse(cfg handlerConfig) error {
 
 	// Repack to the full Runner Result
 	out := APIResponseMessage{
-		Service: service,
-		Api:     resource,
-		Data:    bytes,
+		Service: cfg.service,
+		Api:     cfg.resource,
+		Data:    cfg.data,
 	}
 
 	buf, err := json.Marshal(&out)
 	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
+		return sendAPIError(cfg.ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
 	}
 
 	fmt.Printf("*** Sending buf: %v\n", string(buf))
 
 	// Now, we have to return the Runner response
-	err = ctx.JSONBlob(http.StatusCreated, buf)
+	err = cfg.ctx.JSONBlob(http.StatusCreated, buf)
 	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to send response")
+		return sendAPIError(cfg.ctx, http.StatusInternalServerError, "Failed to send response")
 	}
 
-	// Return no error. This refers to the handler. Even if we return an HTTP
-	// error, but everything else is working properly, tell Echo that we serviced
-	// the error. We should only return errors from Echo handlers if the actual
-	// servicing of the error on the infrastructure level failed. Returning an
-	// HTTP/400 or HTTP/500 from here means Echo/HTTP are still working, so
-	// return nil.
 	return nil
 }

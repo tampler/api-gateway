@@ -60,6 +60,20 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
+	pub := Publisher{
+		pong: pongMgr,
+	}
+
+	pub.AddHandlers()
+
+	// Add custom context
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cc := &MyContext{c, &pub}
+			return next(cc)
+		}
+	})
+
 	// Log all requests
 	e.Use(middleware.Logger())
 

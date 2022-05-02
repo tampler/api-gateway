@@ -44,5 +44,4 @@ func Test_observer(t *testing.T) {
 			}
 		}
 	})
-
 }

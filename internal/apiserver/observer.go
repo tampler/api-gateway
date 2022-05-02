@@ -35,7 +35,9 @@ func (p *Publisher) AddHandlers() error {
 	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
 		fmt.Printf("*** PONG handler for task %v\n", t.ID)
 
-		p.NotifyObservers(BusEvent{data: []byte("Hello")})
+		p.NotifyObservers(BusEvent{
+			data: t.Payload,
+		})
 
 		return nil, nil
 	})
@@ -43,6 +45,7 @@ func (p *Publisher) AddHandlers() error {
 		return err
 	}
 
+	// Execute PONG queue
 	go p.pong.Run(context.Background())
 
 	return nil

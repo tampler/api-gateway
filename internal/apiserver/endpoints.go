@@ -82,32 +82,31 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task"))
 	}
 
-	// Block after creating a PING event
-	time.Sleep(3 * time.Second)
+	err = sendResponse(ctx, observ.Message, serviceName, resourceName)
 
 	return nil
 }
 
-func sendResponse(cfg handlerConfig) error {
+func sendResponse(ctx echo.Context, data []byte, service, resource string) error {
 
 	// Repack to the full Runner Result
 	out := APIResponseMessage{
-		Service: cfg.service,
-		Api:     cfg.resource,
-		Data:    cfg.data,
+		Service: service,
+		Api:     resource,
+		Data:    data,
 	}
 
 	buf, err := json.Marshal(&out)
 	if err != nil {
-		return sendAPIError(cfg.ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
+		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
 	}
 
 	fmt.Printf("*** Sending buf: %v\n", string(buf))
 
 	// Now, we have to return the Runner response
-	err = cfg.ctx.JSONBlob(http.StatusCreated, buf)
+	err = ctx.JSONBlob(http.StatusCreated, buf)
 	if err != nil {
-		return sendAPIError(cfg.ctx, http.StatusInternalServerError, "Failed to send response")
+		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to send response")
 	}
 
 	return nil

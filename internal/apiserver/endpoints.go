@@ -29,7 +29,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	cc.Foo()
 
 	// Add observer
-	observ := TestObserver{222, ""}
+	observ := TestObserver{222, nil}
 
 	cc.pub.AddSubscriber(&observ)
 
@@ -83,22 +83,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	}
 
 	// Block after creating a PING event
-	time.Sleep(5 * time.Second)
-
-	// ch := make(chan error, 2)
-
-	// go s.ping.Run(backCTX, ch)
-	// go s.pong.Run(backCTX, ch)
-
-	// pingErr, pongErr := <-ch, <-ch
-
-	// if pingErr != nil {
-	// 	return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PING manager: %v", pingErr.Error()))
-	// }
-
-	// if pongErr != nil {
-	// 	return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to run a PONG manager: %v", pongErr.Error()))
-	// }
+	time.Sleep(3 * time.Second)
 
 	return nil
 }

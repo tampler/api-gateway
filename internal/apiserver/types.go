@@ -31,9 +31,8 @@ func MakeQueueManager(c *aj.Client, r *aj.Mux) QueueManager {
 }
 
 // Run - runs the client and returns an erorr in a channel
-func (m QueueManager) Run(ctx context.Context, c chan error) {
-	err := m.client.Run(ctx, m.router)
-	c <- err
+func (m QueueManager) Run(ctx context.Context) error {
+	return m.client.Run(ctx, m.router)
 }
 
 func (m QueueManager) SetupHandler(cfg handlerConfig, method HandlerFunctor) error {

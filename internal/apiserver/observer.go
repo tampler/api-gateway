@@ -6,6 +6,7 @@ import (
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/labstack/echo/v4"
+	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 )
 
 type MyContext struct {
@@ -30,7 +31,7 @@ type Subscriber interface {
 }
 
 type Publisher struct {
-	subs []Subscriber
+	sub  Subscriber
 	pong QueueManager
 }
 
@@ -41,25 +42,22 @@ func MakePublisher(m QueueManager) Publisher {
 func (p *Publisher) AddHandlers() error {
 
 	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
-		fmt.Printf("*** PONG handler for task %v\n", t.ID)
 
 		data, err := decodeJSONBytes(t.Payload)
 		if err != nil {
 			return nil, err
 		}
 
-		fmt.Printf(">>>> Started NOTIFY... \n")
+		fmt.Printf("*** PONG handler with PLOAD %v\n", string(data))
 
 		p.NotifyObservers(BusEvent{
 			data: data,
 		})
 
-		fmt.Printf(">>>> Exit NOTIFY... \n")
-
 		return nil, nil
 	})
 	if err != nil {
-		return err
+		return fail.Error500(fmt.Sprintf("PONG Handler: %v\n", err.Error()))
 	}
 
 	// Execute PONG queue
@@ -69,43 +67,30 @@ func (p *Publisher) AddHandlers() error {
 }
 
 func (p *Publisher) AddSubscriber(o Subscriber) {
-	p.subs = append(p.subs, o)
+	p.sub = o
 }
 
 func (p *Publisher) RemoveObserver(o Subscriber) {
-	var indexToRemove int
-	for i, observer := range p.subs {
-		if observer == o {
-			indexToRemove = i
-			break
-		}
-	}
-	p.subs = append(
-		p.subs[:indexToRemove],
-		p.subs[indexToRemove+1:]...,
-	)
+	p.sub = nil
 }
 
 func (p *Publisher) NotifyReciever(id string, e BusEvent) {
-	for _, observer := range p.subs {
-		observer.Notify(e)
-	}
+	p.sub.Notify(e)
 }
 
 func (p *Publisher) NotifyObservers(ev BusEvent) {
-	for _, observer := range p.subs {
-		observer.Notify(ev)
-	}
+	p.sub.Notify(ev)
+
 }
 
-type TestObserver struct {
+type BusObserver struct {
 	ID      int
 	Message []byte
 	done    chan bool
 }
 
-func (p *TestObserver) Notify(ev BusEvent) {
-	fmt.Printf("Obderver %d: message '%s' received \n", p.ID, ev.data)
+func (p *BusObserver) Notify(ev BusEvent) {
+	fmt.Printf(" *** NOTIFY %v received \n", string(ev.data))
 	p.Message = ev.data
 	p.done <- true
 }

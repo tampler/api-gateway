@@ -23,6 +23,8 @@ const (
 	topic = "sdk::ec2"
 )
 
+var done = make(chan bool, 2)
+
 func (s *APIServer) GetMetrics(ctx echo.Context) error {
 	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
@@ -32,10 +34,11 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	cc := ctx.(*MyContext)
 	cc.Foo()
 
-	done := make(chan bool, 2)
+	// done := make(chan bool, 4)
+	// defer close(done)
 
 	// Add observer
-	observ := TestObserver{222, nil, done}
+	observ := BusObserver{222, nil, done}
 
 	cc.pub.AddSubscriber(&observ)
 
@@ -89,8 +92,8 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	}
 
 	select {
-	case <-time.After(10 * time.Second):
-		log.Fatal("*** FAIL: to execute command")
+	case <-time.After(15 * time.Second):
+		log.Printf("*** FAIL: to execute command")
 	case <-done:
 		log.Printf("*** Message: %v\n", string(observ.Message))
 	}

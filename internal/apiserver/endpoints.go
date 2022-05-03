@@ -98,9 +98,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		log.Printf("*** Message: %v\n", string(observ.Message))
 	}
 
-	err = sendResponse(ctx, observ.Message, serviceName, resourceName)
-
-	return nil
+	return sendResponse(ctx, observ.Message, serviceName, resourceName)
 }
 
 func sendResponse(ctx echo.Context, data []byte, service, resource string) error {
@@ -111,6 +109,8 @@ func sendResponse(ctx echo.Context, data []byte, service, resource string) error
 		Api:     resource,
 		Data:    data,
 	}
+
+	fmt.Printf("**** Sending msg: %v\n", out)
 
 	buf, err := json.Marshal(&out)
 	if err != nil {

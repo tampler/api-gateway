@@ -7,10 +7,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
+	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 )
 
@@ -31,7 +31,7 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	var cfg config.AppConfig
 
 	if err := cfg.AppInit(TEST_CONFIG_NAME, TEST_CONFIG_PATH); err != nil {
-		log.Fatal("Config failed" + err.Error())
+		zl.Fatalf("Config failed" + err.Error())
 	}
 
 	swagger, err := api.GetSwagger()
@@ -46,12 +46,12 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// Build a Queue Managers for PING and PONG
 	pingMgr, err := BuildQueueManger("PING")
 	if err != nil {
-		log.Fatalf("Failed to create a queue: %v\n", err)
+		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}
 
 	pongMgr, err := BuildQueueManger("PONG")
 	if err != nil {
-		log.Fatalf("Failed to create a queue: %v\n", err)
+		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}
 
 	// Create an instance of our handler which satisfies the generated interface
@@ -60,7 +60,7 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
-	pub := MakePublisher(pongMgr, zl)
+	pub := MakePublisher(pongMgr, zl, map[uuid.UUID]Subscriber{})
 
 	pub.AddHandlers()
 

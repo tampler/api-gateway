@@ -6,8 +6,11 @@ import (
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
+	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 )
+
+type SubMap = map[uuid.UUID]Subscriber
 
 type BusEvent struct {
 	data []byte
@@ -18,13 +21,13 @@ type Subscriber interface {
 }
 
 type Publisher struct {
-	sub  Subscriber
+	sub  SubMap
 	pong QueueManager
 	zl   *zap.SugaredLogger
 }
 
-func MakePublisher(m QueueManager, zl *zap.SugaredLogger) Publisher {
-	return Publisher{pong: m, zl: zl}
+func MakePublisher(m QueueManager, zl *zap.SugaredLogger, sm SubMap) Publisher {
+	return Publisher{pong: m, zl: zl, sub: sm}
 }
 
 func (p *Publisher) AddHandlers() error {
@@ -38,9 +41,10 @@ func (p *Publisher) AddHandlers() error {
 
 		p.zl.Infof("*** PONG handler with PLOAD %v\n", string(data))
 
-		p.NotifyObservers(BusEvent{
-			data: data,
-		})
+		// FIXME
+		dummyID := uuid.NewV4()
+
+		p.NotifyObserver(dummyID, BusEvent{data: data})
 
 		return nil, nil
 	})
@@ -54,31 +58,29 @@ func (p *Publisher) AddHandlers() error {
 	return nil
 }
 
-func (p *Publisher) AddSubscriber(o Subscriber) {
-	p.sub = o
+func (p *Publisher) AddObserver(id uuid.UUID, sub Subscriber) {
+	p.zl.Debugf("Adding observer: %v", id)
+	p.sub[id] = sub
 }
 
-func (p *Publisher) RemoveObserver(o Subscriber) {
-	p.sub = nil
+func (p *Publisher) RemoveObserver(id uuid.UUID) {
+	p.zl.Debugf("Removing observer: %v", id)
+	p.sub[id] = nil
 }
 
-func (p *Publisher) NotifyReciever(id string, e BusEvent) {
-	p.sub.Notify(e)
-}
-
-func (p *Publisher) NotifyObservers(ev BusEvent) {
-	p.sub.Notify(ev)
-
+func (p *Publisher) NotifyObserver(id uuid.UUID, e BusEvent) {
+	p.zl.Debugf("Notifying observer: %v", id)
+	p.sub[id].Notify(e)
 }
 
 type BusObserver struct {
-	id   int
+	id   uuid.UUID
 	data []byte
 	zl   *zap.SugaredLogger
 	done chan bool
 }
 
-func MakeBusObserver(id int, data []byte, zl *zap.SugaredLogger, done chan bool) BusObserver {
+func MakeBusObserver(id uuid.UUID, data []byte, zl *zap.SugaredLogger, done chan bool) BusObserver {
 	return BusObserver{id: id, data: data, zl: zl, done: done}
 }
 

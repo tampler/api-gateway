@@ -18,6 +18,7 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
+	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
@@ -69,7 +70,7 @@ func main() {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
-	pub := apiserver.MakePublisher(pongMgr, zl)
+	pub := apiserver.MakePublisher(pongMgr, zl, map[uuid.UUID]apiserver.Subscriber{})
 
 	pub.AddHandlers()
 

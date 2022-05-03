@@ -31,11 +31,12 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	// Apply custom context
 	cc := ctx.(*MyContext)
 
-	var done = make(chan bool)
+	requestID := uuid.NewV4()
+	done := make(chan bool)
 
 	// Add observer
-	observ := MakeBusObserver(222, nil, cc.zl, done)
-	cc.pub.AddSubscriber(&observ)
+	observ := MakeBusObserver(requestID, nil, cc.zl, done)
+	cc.pub.AddObserver(requestID, &observ)
 
 	// Extract API request from REST
 	var req api.Request
@@ -64,7 +65,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	// Extract API command
 	cmd := APIRequestCommand{
-		JobID:    uuid.NewV4().String(),
+		JobID:    requestID.String(),
 		Service:  serviceName,
 		Resource: resourceName,
 		Action:   action,

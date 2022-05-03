@@ -3,6 +3,7 @@ package apiserver
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -38,7 +39,7 @@ func Test_server(t *testing.T) {
 		command string
 		params  []string
 	}{
-		// // Domain
+		// Domain
 		// {"EC2 Domain List", "Read", "NWS::EC2::Domain", []string{"ROOT"}},
 
 		// // SSH
@@ -66,7 +67,7 @@ func Test_server(t *testing.T) {
 			assert.Equal(t, http.StatusCreated, res.StatusCode())
 			assert.NotEmpty(t, res.Body)
 
-			fmt.Printf("*** Got test response: %v\n", string(res.Body))
+			log.Printf("*** Got test response: %v\n", string(res.Body))
 		})
 		time.Sleep(500 * time.Millisecond)
 	}

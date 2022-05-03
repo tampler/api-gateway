@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/casdoor/casdoor-go-sdk/auth"
@@ -15,12 +14,11 @@ import (
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
-	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
 
@@ -32,27 +30,27 @@ const (
 func main() {
 
 	// Build a logger
-	zl, err := logging.MakeDebugLogger()
-	if err != nil {
-		log.Fatal("Failed to instantiate a logger")
-	}
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+
+	zl := logger.Sugar()
 
 	// Build a global config
 	var cfg config.AppConfig
 
 	if err := cfg.AppInit(CONFIG_NAME, CONFIG_PATH); err != nil {
-		log.Fatal("Config failed %s", err.Error())
+		zl.Fatalf("Config failed %s", err.Error())
 	}
 
 	// Build a Queue Managers for PING and PONG
 	pingMgr, err := apiserver.BuildQueueManger("PING")
 	if err != nil {
-		log.Fatal("Failed to create a queue: %v\n", err)
+		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}
 
 	pongMgr, err := apiserver.BuildQueueManger("PONG")
 	if err != nil {
-		log.Fatal("Failed to create a queue: %v\n", err)
+		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}
 
 	// Create an instance of our handler which satisfies the generated interface
@@ -61,8 +59,7 @@ func main() {
 	// Build Swagger API
 	swagger, err := api.GetSwagger()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
-		os.Exit(1)
+		zl.Fatalf("Error loading swagger spec\n: %s", err)
 	}
 
 	// Clear out the servers array in the swagger spec, that skips validating
@@ -72,14 +69,14 @@ func main() {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
-	pub := apiserver.MakePublisher(pongMgr)
+	pub := apiserver.MakePublisher(pongMgr, zl)
 
 	pub.AddHandlers()
 
 	// Add custom context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := apiserver.MakeMyContext(c, &pub)
+			cc := apiserver.MakeMyContext(c, &pub, zl)
 			return next(cc)
 		}
 	})
@@ -92,13 +89,13 @@ func main() {
 		// Read PEM file
 		pemData, err := ioutil.ReadFile(cfg.Http.PemFile)
 		if err != nil {
-			log.Fatalf("Failed to read the CA file: - %s", err)
+			zl.Fatalf("Failed to read the CA file: - %s", err)
 		}
 
 		// Read Auth config file
 		authData, err := ioutil.ReadFile(cfg.Http.AuthFile)
 		if err != nil {
-			log.Fatalf("Failed to read the Auth config file: - %s", err)
+			zl.Fatalf("Failed to read the Auth config file: - %s", err)
 		}
 
 		// JWT validator
@@ -161,7 +158,7 @@ func main() {
 		e.Use(middleware.BodyDump(func(c echo.Context, req, rsp []byte) {
 			if c.Response().Status != http.StatusCreated {
 				// zl.Error("Request failed", zap.String("RESP", string(rsp)), zap.String("REQ", string(req)))
-				log.Error("*** Request failed: RESP %v, REQ %v", string(rsp), string(req))
+				zl.Error("*** Request failed: RESP %v, REQ %v", string(rsp), string(req))
 			}
 		}))
 	}

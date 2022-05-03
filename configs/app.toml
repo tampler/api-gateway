@@ -1,4 +1,7 @@
 # Full app config
+[common]
+debug = true
+
 [auth]
 auth_enabled = false
 

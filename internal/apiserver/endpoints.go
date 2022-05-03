@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -31,15 +30,12 @@ func (s *APIServer) GetMetrics(ctx echo.Context) error {
 
 func (s *APIServer) PostV1(ctx echo.Context) error {
 
+	// Apply custom context
 	cc := ctx.(*MyContext)
 	cc.Foo()
 
-	// done := make(chan bool, 4)
-	// defer close(done)
-
 	// Add observer
-	observ := BusObserver{222, nil, done}
-
+	observ := MakeBusObserver(222, nil, cc.zl, done)
 	cc.pub.AddSubscriber(&observ)
 
 	// Extract API request from REST
@@ -68,19 +64,17 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	action := string(req.Mandatory.Action)
 
 	// Extract API command
-	cmd := APIRequestMessage{
-		Cmd: APIRequestCommand{
-			JobID:    uuid.NewV4().String(),
-			Service:  serviceName,
-			Resource: resourceName,
-			Action:   action,
-			Params:   params,
-		},
+	cmd := APIRequestCommand{
+		JobID:    uuid.NewV4().String(),
+		Service:  serviceName,
+		Resource: resourceName,
+		Action:   action,
+		Params:   params,
 	}
 
-	fmt.Printf("*** API Server called %v \n", cmd)
+	cc.zl.Infof("*** API Server called %v \n", cmd)
 
-	task, err := aj.NewTask(topic, cmd.Cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
+	task, err := aj.NewTask(topic, cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to create a task: %v \n", err))
 	}
@@ -93,15 +87,15 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	select {
 	case <-time.After(15 * time.Second):
-		log.Printf("*** FAIL: to execute command")
+		cc.zl.Errorf("*** FAIL: to execute command")
 	case <-done:
-		log.Printf("*** Message: %v\n", string(observ.Message))
+		cc.zl.Infof("*** Message: %v\n", string(observ.data))
 	}
 
-	return sendResponse(ctx, observ.Message, serviceName, resourceName)
+	return sendResponse(cc, observ.data, serviceName, resourceName)
 }
 
-func sendResponse(ctx echo.Context, data []byte, service, resource string) error {
+func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 
 	// Repack to the full Runner Result
 	out := APIResponseMessage{
@@ -110,14 +104,12 @@ func sendResponse(ctx echo.Context, data []byte, service, resource string) error
 		Data:    data,
 	}
 
-	fmt.Printf("**** Sending msg: %v\n", out)
-
 	buf, err := json.Marshal(&out)
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
 	}
 
-	fmt.Printf("*** Sending buf: %v\n", string(buf))
+	ctx.zl.Infof("*** Sending buf: %v\n", string(buf))
 
 	// Now, we have to return the Runner response
 	err = ctx.JSONBlob(http.StatusCreated, buf)

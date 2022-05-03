@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
-	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
+	"go.uber.org/zap"
 )
 
 const (
@@ -22,10 +22,10 @@ const (
 func MakeAPIServerMock() (*echo.Echo, error) {
 
 	// Build a logger
-	zl, err := logging.MakeDebugLogger()
-	if err != nil {
-		log.Fatal("Failed to instantiate a logger")
-	}
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+
+	zl := logger.Sugar()
 
 	// Build a global config
 	var cfg config.AppConfig
@@ -60,14 +60,14 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
-	pub := MakePublisher(pongMgr)
+	pub := MakePublisher(pongMgr, zl)
 
 	pub.AddHandlers()
 
 	// Add custom context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := &MyContext{c, &pub}
+			cc := MakeMyContext(c, &pub, zl)
 			return next(cc)
 		}
 	})

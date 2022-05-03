@@ -7,15 +7,19 @@ import (
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/labstack/echo/v4"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
+	"go.uber.org/zap"
 )
 
 type MyContext struct {
 	echo.Context
+	zl  *zap.SugaredLogger
 	pub *Publisher
 }
 
-func MakeMyContext(c echo.Context, pub *Publisher) *MyContext {
-	return &MyContext{c, pub}
+func MakeMyContext(c echo.Context, pub *Publisher, zl *zap.SugaredLogger) *MyContext {
+	return &MyContext{
+		c, zl, pub,
+	}
 }
 
 func (c *MyContext) Foo() {
@@ -33,10 +37,11 @@ type Subscriber interface {
 type Publisher struct {
 	sub  Subscriber
 	pong QueueManager
+	zl   *zap.SugaredLogger
 }
 
-func MakePublisher(m QueueManager) Publisher {
-	return Publisher{pong: m}
+func MakePublisher(m QueueManager, zl *zap.SugaredLogger) Publisher {
+	return Publisher{pong: m, zl: zl}
 }
 
 func (p *Publisher) AddHandlers() error {
@@ -48,7 +53,7 @@ func (p *Publisher) AddHandlers() error {
 			return nil, err
 		}
 
-		fmt.Printf("*** PONG handler with PLOAD %v\n", string(data))
+		p.zl.Infof("*** PONG handler with PLOAD %v\n", string(data))
 
 		p.NotifyObservers(BusEvent{
 			data: data,
@@ -84,13 +89,18 @@ func (p *Publisher) NotifyObservers(ev BusEvent) {
 }
 
 type BusObserver struct {
-	ID      int
-	Message []byte
-	done    chan bool
+	id   int
+	data []byte
+	zl   *zap.SugaredLogger
+	done chan bool
 }
 
-func (p *BusObserver) Notify(ev BusEvent) {
-	fmt.Printf(" *** NOTIFY %v received \n", string(ev.data))
-	p.Message = ev.data
-	p.done <- true
+func MakeBusObserver(id int, data []byte, zl *zap.SugaredLogger, done chan bool) BusObserver {
+	return BusObserver{id: id, data: data, zl: zl, done: done}
+}
+
+func (bo *BusObserver) Notify(ev BusEvent) {
+	bo.zl.Infof(" *** NOTIFY %v received \n", string(ev.data))
+	bo.data = ev.data
+	bo.done <- true
 }

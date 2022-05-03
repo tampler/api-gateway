@@ -4,9 +4,24 @@ import (
 	"context"
 
 	aj "github.com/choria-io/asyncjobs"
+	"github.com/labstack/echo/v4"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"go.uber.org/zap"
 )
+
+// MyContext - custom echo context
+type MyContext struct {
+	echo.Context
+	zl  *zap.SugaredLogger
+	pub *Publisher
+}
+
+// MakeMyContext - factory to create a context
+func MakeMyContext(c echo.Context, pub *Publisher, zl *zap.SugaredLogger) *MyContext {
+	return &MyContext{
+		c, zl, pub,
+	}
+}
 
 // QueueManager - an async queue job manager
 type QueueManager struct {

@@ -5,26 +5,9 @@ import (
 	"fmt"
 
 	aj "github.com/choria-io/asyncjobs"
-	"github.com/labstack/echo/v4"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	"go.uber.org/zap"
 )
-
-type MyContext struct {
-	echo.Context
-	zl  *zap.SugaredLogger
-	pub *Publisher
-}
-
-func MakeMyContext(c echo.Context, pub *Publisher, zl *zap.SugaredLogger) *MyContext {
-	return &MyContext{
-		c, zl, pub,
-	}
-}
-
-func (c *MyContext) Foo() {
-	println("foo")
-}
 
 type BusEvent struct {
 	data []byte

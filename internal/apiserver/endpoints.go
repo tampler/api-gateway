@@ -22,8 +22,6 @@ const (
 	topic = "sdk::ec2"
 )
 
-var done = make(chan bool, 2)
-
 func (s *APIServer) GetMetrics(ctx echo.Context) error {
 	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
@@ -32,7 +30,8 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	// Apply custom context
 	cc := ctx.(*MyContext)
-	cc.Foo()
+
+	var done = make(chan bool)
 
 	// Add observer
 	observ := MakeBusObserver(222, nil, cc.zl, done)
@@ -72,7 +71,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		Params:   params,
 	}
 
-	cc.zl.Infof("*** API Server called %v \n", cmd)
+	cc.zl.Infof("*** PING Submitting a task %v \n", cmd)
 
 	task, err := aj.NewTask(topic, cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
 	if err != nil {
@@ -91,6 +90,9 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	case <-done:
 		cc.zl.Infof("*** Message: %v\n", string(observ.data))
 	}
+
+	data, _ := decodeJSONBytes(observ.data)
+	cc.zl.Infof("*** SENDING a data: %v", data)
 
 	return sendResponse(cc, observ.data, serviceName, resourceName)
 }

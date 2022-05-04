@@ -36,15 +36,10 @@ func (p *Publisher) AddHandlers() error {
 
 		data, err := decodeJSONBytes(t.Payload)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Shit happens")
 		}
 
-		p.zl.Infof("*** PONG handler with PLOAD %v\n", string(data))
-
-		// FIXME
-		dummyID := uuid.NewV4()
-
-		p.NotifyObserver(dummyID, BusEvent{data: data})
+		p.NotifyObserver(currentID, BusEvent{data: data})
 
 		return nil, nil
 	})
@@ -85,7 +80,6 @@ func MakeBusObserver(id uuid.UUID, data []byte, zl *zap.SugaredLogger, done chan
 }
 
 func (bo *BusObserver) Notify(ev BusEvent) {
-	bo.zl.Infof(" *** NOTIFY %v received \n", string(ev.data))
 	bo.data = ev.data
 	bo.done <- true
 }

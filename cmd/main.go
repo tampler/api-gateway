@@ -159,7 +159,7 @@ func main() {
 		e.Use(middleware.BodyDump(func(c echo.Context, req, rsp []byte) {
 			if c.Response().Status != http.StatusCreated {
 				// zl.Error("Request failed", zap.String("RESP", string(rsp)), zap.String("REQ", string(req)))
-				zl.Error("*** Request failed: RESP %v, REQ %v", string(rsp), string(req))
+				zl.Error("Request failed: RESP %v, REQ %v", string(rsp), string(req))
 			}
 		}))
 	}

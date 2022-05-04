@@ -22,6 +22,8 @@ const (
 	topic = "sdk::ec2"
 )
 
+var currentID uuid.UUID
+
 func (s *APIServer) GetMetrics(ctx echo.Context) error {
 	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
@@ -31,12 +33,16 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	// Apply custom context
 	cc := ctx.(*MyContext)
 
+	// Create and store request ID
 	requestID := uuid.NewV4()
+	currentID = requestID
+
 	done := make(chan bool)
 
 	// Add observer
 	observ := MakeBusObserver(requestID, nil, cc.zl, done)
 	cc.pub.AddObserver(requestID, &observ)
+	defer cc.pub.RemoveObserver(currentID)
 
 	// Extract API request from REST
 	var req api.Request
@@ -72,12 +78,12 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		Params:   params,
 	}
 
-	cc.zl.Infof("*** PING Submitting a task %v \n", cmd)
-
 	task, err := aj.NewTask(topic, cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to create a task: %v \n", err))
 	}
+
+	cc.zl.Debugf("PING adding task %v \n", cmd)
 
 	// Submit a task into the PING queue
 	err = s.ping.client.EnqueueTask(context.Background(), task)
@@ -85,15 +91,14 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task"))
 	}
 
-	select {
-	case <-time.After(15 * time.Second):
-		cc.zl.Errorf("*** FAIL: to execute command")
-	case <-done:
-		cc.zl.Infof("*** Message: %v\n", string(observ.data))
-	}
+	cc.zl.Debug("PING task added")
 
-	data, _ := decodeJSONBytes(observ.data)
-	cc.zl.Infof("*** SENDING a data: %v", data)
+	select {
+	case <-time.After(5 * time.Second):
+		cc.zl.Errorf("FAIL: to execute command")
+	case <-done:
+		cc.zl.Debugf("Message: %v\n", string(observ.data))
+	}
 
 	return sendResponse(cc, observ.data, serviceName, resourceName)
 }
@@ -112,7 +117,7 @@ func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
 	}
 
-	ctx.zl.Infof("*** Sending buf: %v\n", string(buf))
+	ctx.zl.Debugf("Sending buf: %v\n", string(buf))
 
 	// Now, we have to return the Runner response
 	err = ctx.JSONBlob(http.StatusCreated, buf)

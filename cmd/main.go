@@ -44,12 +44,12 @@ func main() {
 	}
 
 	// Build a Queue Managers for PING and PONG
-	pingMgr, err := apiserver.BuildQueueManger("PING")
+	pingMgr, err := apiserver.BuildQueueManger("PING", zl)
 	if err != nil {
 		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}
 
-	pongMgr, err := apiserver.BuildQueueManger("PONG")
+	pongMgr, err := apiserver.BuildQueueManger("PONG", zl)
 	if err != nil {
 		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}

@@ -44,12 +44,12 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	swagger.Servers = nil
 
 	// Build a Queue Managers for PING and PONG
-	pingMgr, err := BuildQueueManger("PING")
+	pingMgr, err := BuildQueueManger("PING", zl)
 	if err != nil {
 		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}
 
-	pongMgr, err := BuildQueueManger("PONG")
+	pongMgr, err := BuildQueueManger("PONG", zl)
 	if err != nil {
 		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}

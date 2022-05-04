@@ -58,18 +58,18 @@ func MakeAPIServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong QueueMa
 	return &srv
 }
 
-// APICommand - API command
-type APIRequestCommand struct {
-	JobID    string
+// APICommand - cloud control command
+type APICommand struct {
 	Service  string
 	Resource string
 	Action   string
 	Params   []string
 }
 
-// APIMessage - message to be processed by SDK
-type APIRequestMessage struct {
-	Cmd APIRequestCommand
+// APIRequest - top level API request
+type APIRequest struct {
+	JobID string
+	Cmd   APICommand
 }
 
 // APIResponseMessage - final JSON output from SDK

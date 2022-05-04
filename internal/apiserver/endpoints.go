@@ -70,12 +70,14 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	action := string(req.Mandatory.Action)
 
 	// Extract API command
-	cmd := APIRequestCommand{
-		JobID:    requestID.String(),
-		Service:  serviceName,
-		Resource: resourceName,
-		Action:   action,
-		Params:   params,
+	cmd := APIRequest{
+		JobID: requestID.String(),
+		Cmd: APICommand{
+			Service:  serviceName,
+			Resource: resourceName,
+			Action:   action,
+			Params:   params,
+		},
 	}
 
 	task, err := aj.NewTask(topic, cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))

@@ -32,11 +32,12 @@ func MakePublisher(m QueueManager, zl *zap.SugaredLogger, sm SubMap) Publisher {
 
 func (p *Publisher) AddHandlers() error {
 
-	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
+	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, log aj.Logger, t *aj.Task) (interface{}, error) {
 
 		data, err := decodeJSONBytes(t.Payload)
 		if err != nil {
-			return nil, fmt.Errorf("Shit happens")
+			log.Errorf("PONG failed to decode a JSON payload")
+			return nil, aj.ErrTerminateTask
 		}
 
 		p.NotifyObserver(currentID, BusEvent{data: data})

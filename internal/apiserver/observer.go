@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	aj "github.com/choria-io/asyncjobs"
@@ -34,13 +35,19 @@ func (p *Publisher) AddHandlers() error {
 
 	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, log aj.Logger, t *aj.Task) (interface{}, error) {
 
-		data, err := decodeJSONBytes(t.Payload)
+		var resp APIResponse
+
+		if err := json.Unmarshal(t.Payload, &resp); err != nil {
+			return nil, aj.ErrTerminateTask
+		}
+
+		data, err := decodeJSONBytes(resp.Data)
 		if err != nil {
 			log.Errorf("PONG failed to decode a JSON payload")
 			return nil, aj.ErrTerminateTask
 		}
 
-		p.NotifyObserver(currentID, BusEvent{data: data})
+		p.NotifyObserver(resp.JobID, BusEvent{data: data})
 
 		return nil, nil
 	})
@@ -69,6 +76,7 @@ func (p *Publisher) NotifyObserver(id uuid.UUID, e BusEvent) {
 	p.sub[id].Notify(e)
 }
 
+// BusObserver - AJC async listener
 type BusObserver struct {
 	id   uuid.UUID
 	data []byte
@@ -76,10 +84,12 @@ type BusObserver struct {
 	done chan bool
 }
 
+// MakeBusObserver - factory for Bus observer
 func MakeBusObserver(id uuid.UUID, data []byte, zl *zap.SugaredLogger, done chan bool) BusObserver {
 	return BusObserver{id: id, data: data, zl: zl, done: done}
 }
 
+// Notify - notification with unblocking for listeners
 func (bo *BusObserver) Notify(ev BusEvent) {
 	bo.data = ev.data
 	bo.done <- true

@@ -22,8 +22,6 @@ const (
 	topic = "sdk::ec2"
 )
 
-var currentID uuid.UUID
-
 func (s *APIServer) GetMetrics(ctx echo.Context) error {
 	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
@@ -35,14 +33,13 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	// Create and store request ID
 	requestID := uuid.NewV4()
-	currentID = requestID
 
 	done := make(chan bool)
 
 	// Add observer
 	observ := MakeBusObserver(requestID, nil, cc.zl, done)
 	cc.pub.AddObserver(requestID, &observ)
-	defer cc.pub.RemoveObserver(currentID)
+	defer cc.pub.RemoveObserver(requestID)
 
 	// Extract API request from REST
 	var req api.Request
@@ -71,7 +68,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	// Extract API command
 	cmd := APIRequest{
-		JobID: requestID.String(),
+		JobID: requestID,
 		Cmd: APICommand{
 			Service:  serviceName,
 			Resource: resourceName,
@@ -96,7 +93,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	cc.zl.Debug("PING task added")
 
 	select {
-	case <-time.After(5 * time.Second):
+	case <-time.After(8 * time.Second):
 		cc.zl.Errorf("FAIL: to execute command")
 	case <-done:
 		cc.zl.Debugf("Message: %v\n", string(observ.data))
@@ -108,10 +105,9 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 
 	// Repack to the full Runner Result
-	out := APIResponseMessage{
-		Service: service,
-		Api:     resource,
-		Data:    data,
+	out := APIResponse{
+		JobID: uuid.Nil,
+		Data:  data,
 	}
 
 	buf, err := json.Marshal(&out)

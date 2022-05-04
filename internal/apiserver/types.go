@@ -6,6 +6,7 @@ import (
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/labstack/echo/v4"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
+	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 )
 
@@ -68,13 +69,12 @@ type APICommand struct {
 
 // APIRequest - top level API request
 type APIRequest struct {
-	JobID string
-	Cmd   APICommand
+	JobID uuid.UUID  `json:"jobid"`
+	Cmd   APICommand `json:"cmd"`
 }
 
-// APIResponseMessage - final JSON output from SDK
-type APIResponseMessage struct {
-	Service string `json:"service"`
-	Api     string `json:"api"`
-	Data    []byte `json:"data"`
+// APIResponse - top level API response
+type APIResponse struct {
+	JobID uuid.UUID `json:"jobid"`
+	Data  []byte    `json:"data"`
 }

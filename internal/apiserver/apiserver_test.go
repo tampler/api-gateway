@@ -1,7 +1,6 @@
 package apiserver
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -62,7 +61,7 @@ func Test_ssh(t *testing.T) {
 			req.Command = d.command
 			req.Params = d.params
 
-			res, err := req.MakeRequest(context.Background())
+			res, err := req.MakeRequest()
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
 			assert.Equal(t, http.StatusCreated, res.StatusCode())
 			assert.NotEmpty(t, res.Body)
@@ -104,7 +103,7 @@ func TestDS_domain(t *testing.T) {
 			req.Command = d.command
 			req.Params = d.params
 
-			res, err := req.MakeRequest(context.Background())
+			res, err := req.MakeRequest()
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
 			assert.Equal(t, http.StatusCreated, res.StatusCode())
 			assert.NotEmpty(t, res.Body)

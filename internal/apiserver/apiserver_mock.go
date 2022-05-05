@@ -6,26 +6,26 @@ import (
 	oapimw "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
+	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	uuid "github.com/satori/go.uuid"
-	"go.uber.org/zap"
 )
 
 const (
 	TEST_CONFIG_NAME = "test"
 	TEST_CONFIG_PATH = "../../configs"
+	logOut           = "console" // json/console
 )
 
 func MakeAPIServerMock() (*echo.Echo, error) {
 
-	// Build a logger
-	logger, _ := zap.NewDevelopment()
-	defer logger.Sync()
+	// SDK logger
+	sdklogger, _ := logging.MakeLogger("debug", logOut)
+	defer sdklogger.Sync()
 
-	zl := logger.Sugar()
+	zl := sdklogger.Sugar()
 
 	// Build a global config
 	var cfg config.AppConfig
@@ -44,12 +44,12 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	swagger.Servers = nil
 
 	// Build a Queue Managers for PING and PONG
-	pingMgr, err := BuildQueueManger("PING", zl)
+	pingMgr, err := BuildQueueManger("PING", nil)
 	if err != nil {
 		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}
 
-	pongMgr, err := BuildQueueManger("PONG", zl)
+	pongMgr, err := BuildQueueManger("PONG", nil)
 	if err != nil {
 		zl.Fatalf("Failed to create a queue: %v\n", err)
 	}
@@ -73,7 +73,7 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	})
 
 	// Log all requests
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.

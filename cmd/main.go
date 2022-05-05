@@ -18,29 +18,30 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
+	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	uuid "github.com/satori/go.uuid"
-	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
 
 const (
 	CONFIG_PATH = "./configs"
 	CONFIG_NAME = "app"
+	logOut      = "console" // json/console
+
 )
 
 func main() {
 
-	// Build a logger
-	logger, _ := zap.NewDevelopment()
+	// SDK logger
+	logger, _ := logging.MakeLogger("debug", logOut)
 	defer logger.Sync()
-
 	zl := logger.Sugar()
 
 	// Build a global config
 	var cfg config.AppConfig
 
 	if err := cfg.AppInit(CONFIG_NAME, CONFIG_PATH); err != nil {
-		zl.Fatalf("Config failed %s", err.Error())
+		zl.Fatal("Config failed %s", err.Error())
 	}
 
 	// Build a Queue Managers for PING and PONG

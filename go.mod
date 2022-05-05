@@ -3,7 +3,6 @@ module github.com/neurodyne-web-services/api-gateway
 go 1.18
 
 require (
-	github.com/buger/jsonparser v1.1.1
 	github.com/casdoor/casdoor-go-sdk v0.4.0
 	github.com/choria-io/asyncjobs v0.0.7
 	github.com/deepmap/oapi-codegen v1.10.1
@@ -12,8 +11,8 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/labstack/echo-contrib v0.12.0
 	github.com/labstack/echo/v4 v4.7.2
-	github.com/nats-io/nats.go v1.14.1-0.20220412004736-c75dfd54b52c
-	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220504184521-72a3a047337e
+	github.com/nats-io/nats.go v1.15.0
+	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220505094736-3479192a3696
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1
@@ -81,3 +80,5 @@ require (
 )
 
 replace github.com/neurodyne-web-services/nws-sdk-go => /home/bku/work/go/src/github.com/neurodyne-web-services/nws-sdk-go
+
+replace github.com/choria-io/asyncjobs => /home/bku/work/go/src/github.com/drev74/asyncjobs

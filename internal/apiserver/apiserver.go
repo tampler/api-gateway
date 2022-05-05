@@ -13,7 +13,7 @@ func BuildQueueManger(queueName string, zl *zap.SugaredLogger) (QueueManager, er
 		aj.NatsContext("AJC"),
 		aj.BindWorkQueue(queueName),
 		aj.ClientConcurrency(10),
-		aj.CustomLogger(zl),
+		// aj.CustomLogger(zl),
 		// aj.PrometheusListenPort(8089),
 		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
 

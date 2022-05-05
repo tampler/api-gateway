@@ -38,16 +38,12 @@ func (p *Publisher) AddHandlers() error {
 		var resp APIResponse
 
 		if err := json.Unmarshal(t.Payload, &resp); err != nil {
-			return nil, aj.ErrTerminateTask
+			return nil, err
 		}
 
-		data, err := decodeJSONBytes(resp.Data)
-		if err != nil {
-			log.Errorf("PONG failed to decode a JSON payload")
-			return nil, aj.ErrTerminateTask
-		}
+		log.Debugf("PONG SDK response: %v", string(resp.Data))
 
-		p.NotifyObserver(resp.JobID, BusEvent{data: data})
+		p.NotifyObserver(resp.JobID, BusEvent{data: resp.Data})
 
 		return nil, nil
 	})

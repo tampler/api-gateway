@@ -2,18 +2,15 @@ package apiserver
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/buger/jsonparser"
 	aj "github.com/choria-io/asyncjobs"
 
 	"github.com/labstack/echo/v4"
-	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
 	uuid "github.com/satori/go.uuid"
 )
@@ -93,10 +90,17 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	cc.zl.Debug("PING task added")
 
 	select {
-	case <-time.After(8 * time.Second):
+
+	case <-time.After(15 * time.Second):
 		cc.zl.Errorf("FAIL: to execute command")
+
 	case <-done:
 		cc.zl.Debugf("Message: %v\n", string(observ.data))
+
+	}
+
+	if observ.data == nil || len(observ.data) == 0 {
+		return sendAPIError(ctx, http.StatusInternalServerError, "Empty buffer")
 	}
 
 	return sendResponse(cc, observ.data, serviceName, resourceName)
@@ -124,15 +128,4 @@ func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 	}
 
 	return nil
-}
-
-func decodeJSONBytes(bytes []byte) ([]byte, error) {
-
-	// Base-64 encoded string after marshalling []byte
-	encData, err := jsonparser.GetString(bytes)
-	if err != nil {
-		return nil, fail.Error500(err.Error())
-	}
-
-	return base64.StdEncoding.DecodeString(string(encData))
 }

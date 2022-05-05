@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
@@ -23,9 +24,10 @@ type Subscriber interface {
 }
 
 type Publisher struct {
-	sub  SubMap
-	pong QueueManager
-	zl   *zap.SugaredLogger
+	mutex sync.RWMutex
+	sub   SubMap
+	pong  QueueManager
+	zl    *zap.SugaredLogger
 }
 
 func MakePublisher(m QueueManager, zl *zap.SugaredLogger, sm SubMap) Publisher {
@@ -59,17 +61,23 @@ func (p *Publisher) AddHandlers(topic string) error {
 }
 
 func (p *Publisher) AddObserver(id uuid.UUID, sub Subscriber) {
-	p.zl.Debugf("Adding observer: %v", id)
+	// p.zl.Debugf("Adding observer: %v", id)
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 	p.sub[id] = sub
 }
 
 func (p *Publisher) RemoveObserver(id uuid.UUID) {
-	p.zl.Debugf("Removing observer: %v", id)
+	// p.zl.Debugf("Removing observer: %v", id)
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 	p.sub[id] = nil
 }
 
 func (p *Publisher) NotifyObserver(id uuid.UUID, e BusEvent) {
-	p.zl.Debugf("Notifying observer: %v", id)
+	// p.zl.Debugf("Notifying observer: %v", id)
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 	p.sub[id].Notify(e)
 }
 

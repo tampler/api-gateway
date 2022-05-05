@@ -119,7 +119,7 @@ func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
 	}
 
-	ctx.zl.Debugf("Sending buf: %v", string(buf))
+	// ctx.zl.Debugf("Sending buf: %v", string(buf))
 
 	// Now, we have to return the Runner response
 	err = ctx.JSONBlob(http.StatusCreated, buf)

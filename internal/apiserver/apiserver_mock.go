@@ -2,37 +2,37 @@ package apiserver
 
 import (
 	"fmt"
+	"log"
 
+	aj "github.com/choria-io/asyncjobs"
 	oapimw "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
+	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	uuid "github.com/satori/go.uuid"
 )
 
 const (
-	TEST_CONFIG_NAME = "test"
-	TEST_CONFIG_PATH = "../../configs"
-	logOut           = "console" // json/console
+	CONFIG_PATH = "../../configs"
+	CONFIG_NAME = "app"
 )
 
 func MakeAPIServerMock() (*echo.Echo, error) {
 
-	// SDK logger
-	sdklogger, _ := logging.MakeLogger("debug", logOut)
-	defer sdklogger.Sync()
-
-	zl := sdklogger.Sugar()
-
 	// Build a global config
 	var cfg config.AppConfig
 
-	if err := cfg.AppInit(TEST_CONFIG_NAME, TEST_CONFIG_PATH); err != nil {
-		zl.Fatalf("Config failed" + err.Error())
+	if err := cfg.AppInit(CONFIG_NAME, CONFIG_PATH); err != nil {
+		log.Fatalf("Config failed %s", err.Error())
 	}
+
+	// App logger
+	logger, _ := logging.MakeLogger(cfg.Log.Verbosity, cfg.Log.Output)
+	defer logger.Sync()
+	zl := logger.Sugar()
 
 	swagger, err := api.GetSwagger()
 	if err != nil {
@@ -43,16 +43,36 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
-	// Build a Queue Managers for PING and PONG
-	pingMgr, err := BuildQueueManger("PING", nil)
+	// Input queue
+	pingClient, err := aj.NewClient(
+		aj.NatsContext(cfg.Ajc.Ingress.Context),
+		aj.BindWorkQueue(cfg.Ajc.Ingress.Name),
+		aj.ClientConcurrency(cfg.Ajc.Ingress.Concurrency),
+		aj.PrometheusListenPort(cfg.Ajc.Ingress.MetricsPort),
+		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+
 	if err != nil {
-		zl.Fatalf("Failed to create a queue: %v\n", err)
+		zl.Fatal(err)
 	}
 
-	pongMgr, err := BuildQueueManger("PONG", nil)
+	// Output queue
+	pongClient, err := aj.NewClient(
+		aj.NatsContext(cfg.Ajc.Egress.Context),
+		aj.BindWorkQueue(cfg.Ajc.Egress.Name),
+		aj.ClientConcurrency(cfg.Ajc.Egress.Concurrency),
+		aj.PrometheusListenPort(cfg.Ajc.Egress.MetricsPort),
+		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+
 	if err != nil {
-		zl.Fatalf("Failed to create a queue: %v\n", err)
+		zl.Fatal(err)
 	}
+
+	// Create queue routers
+	pingRouter := aj.NewTaskRouter()
+	pongRouter := aj.NewTaskRouter()
+
+	pingMgr := MakeQueueManager(pingClient, pingRouter)
+	pongMgr := MakeQueueManager(pongClient, pongRouter)
 
 	// Create an instance of our handler which satisfies the generated interface
 	cc := MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
@@ -71,9 +91,6 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 			return next(cc)
 		}
 	})
-
-	// Log all requests
-	// e.Use(middleware.Logger())
 
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.

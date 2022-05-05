@@ -4,19 +4,21 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/casdoor/casdoor-go-sdk/auth"
+	aj "github.com/choria-io/asyncjobs"
 	oapimw "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/neurodyne-web-services/api-gateway/cmd/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
+	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	uuid "github.com/satori/go.uuid"
@@ -26,34 +28,52 @@ import (
 const (
 	CONFIG_PATH = "./configs"
 	CONFIG_NAME = "app"
-	logOut      = "console" // json/console
-
 )
 
 func main() {
-
-	// SDK logger
-	logger, _ := logging.MakeLogger("debug", logOut)
-	defer logger.Sync()
-	zl := logger.Sugar()
 
 	// Build a global config
 	var cfg config.AppConfig
 
 	if err := cfg.AppInit(CONFIG_NAME, CONFIG_PATH); err != nil {
-		zl.Fatal("Config failed %s", err.Error())
+		log.Fatalf("Config failed %s", err.Error())
 	}
 
-	// Build a Queue Managers for PING and PONG
-	pingMgr, err := apiserver.BuildQueueManger("PING", zl)
+	// App logger
+	logger, _ := logging.MakeLogger(cfg.Log.Verbosity, cfg.Log.Output)
+	defer logger.Sync()
+	zl := logger.Sugar()
+
+	// Input queue
+	pingClient, err := aj.NewClient(
+		aj.NatsContext(cfg.Ajc.Ingress.Context),
+		aj.BindWorkQueue(cfg.Ajc.Ingress.Name),
+		aj.ClientConcurrency(cfg.Ajc.Ingress.Concurrency),
+		aj.PrometheusListenPort(cfg.Ajc.Ingress.MetricsPort),
+		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+
 	if err != nil {
-		zl.Fatalf("Failed to create a queue: %v\n", err)
+		zl.Fatal(err)
 	}
 
-	pongMgr, err := apiserver.BuildQueueManger("PONG", zl)
+	// Output queue
+	pongClient, err := aj.NewClient(
+		aj.NatsContext(cfg.Ajc.Egress.Context),
+		aj.BindWorkQueue(cfg.Ajc.Egress.Name),
+		aj.ClientConcurrency(cfg.Ajc.Egress.Concurrency),
+		aj.PrometheusListenPort(cfg.Ajc.Egress.MetricsPort),
+		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
+
 	if err != nil {
-		zl.Fatalf("Failed to create a queue: %v\n", err)
+		zl.Fatal(err)
 	}
+
+	// Create queue routers
+	pingRouter := aj.NewTaskRouter()
+	pongRouter := aj.NewTaskRouter()
+
+	pingMgr := apiserver.MakeQueueManager(pingClient, pingRouter)
+	pongMgr := apiserver.MakeQueueManager(pongClient, pongRouter)
 
 	// Create an instance of our handler which satisfies the generated interface
 	cc := apiserver.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
@@ -136,19 +156,23 @@ func main() {
 		}))
 	}
 
-	// cfg := middleware.LoggerConfig{
-	// 	Format: `{"time":"${time_rfc3339_nano}","id":"${id}","remote_ip":"${remote_ip}","host":"${host}","user_agent":"${user_agent}",` +
-	// 		`"method":"${method}","uri":"${uri}","status":${status}, "latency":${latency},` +
-	// 		`"latency_human":"${latency_human}","bytes_in":${bytes_in}, "path":"${path}", "referer":"${referer}",` +
-	// 		`"bytes_out":${bytes_out}, "protocol":"${protocol}"}` + "\n",
-	// }
-	// logcfg := middleware.LoggerConfig{
-	// 	Format: "status = ${status} time = ${time_rfc3339} lat = ${latency_human} \n",
-	// }
+	if cfg.Http.AllowLogging {
 
-	// Log all requests
-	// e.Use(middleware.LoggerWithConfig(logcfg))
-	// e.Use(middleware.Logger())
+		// logcfg := middleware.LoggerConfig{
+		// 	Format: `{"time":"${time_rfc3339_nano}","id":"${id}","remote_ip":"${remote_ip}","host":"${host}","user_agent":"${user_agent}",` +
+		// 		`"method":"${method}","uri":"${uri}","status":${status}, "latency":${latency},` +
+		// 		`"latency_human":"${latency_human}","bytes_in":${bytes_in}, "path":"${path}", "referer":"${referer}",` +
+		// 		`"bytes_out":${bytes_out}, "protocol":"${protocol}"}` + "\n",
+		// }
+
+		logcfg := middleware.LoggerConfig{
+			Format: "status = ${status} time = ${time_rfc3339} lat = ${latency_human}",
+		}
+
+		// Log all requests
+		// e.Use(middleware.Logger())
+		e.Use(middleware.LoggerWithConfig(logcfg))
+	}
 
 	if cfg.Http.AllowCompress {
 		e.Use(middleware.GzipWithConfig(middleware.GzipConfig{

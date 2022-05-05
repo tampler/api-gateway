@@ -5,7 +5,7 @@ import (
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/labstack/echo/v4"
-	"github.com/neurodyne-web-services/api-gateway/cmd/config"
+	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 )

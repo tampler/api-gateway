@@ -1,7 +1,4 @@
 # Full app config
-[common]
-debug = true
-
 [auth]
 auth_enabled = false
 
@@ -19,11 +16,27 @@ timeout = 300
 allow_compress = false
 compress_level = 5
 
+allow_logging = false
+
 [debug]
 dump_on_error = false
+log_output = "console"
+log_verbosity = "debug"
 metrics_name = "api_gateway"
 
-[nats]
-server = "nats://hyp:4222"
-timeout = 25
-topic = "command.ingress"
+[ajc]
+task_timeout_min = 3
+
+[ajc.ingress]
+concurrency = 4
+context = "AJC"
+metrics_port = 8090
+name = "PING"
+topic = "sdk::ec2"
+
+[ajc.egress]
+concurrency = 4
+context = "AJC"
+metrics_port = 8091
+name = "PONG"
+topic = "sdk::ec2"

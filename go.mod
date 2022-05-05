@@ -12,7 +12,7 @@ require (
 	github.com/labstack/echo-contrib v0.12.0
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/nats-io/nats.go v1.15.0
-	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220505094736-3479192a3696
+	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220505155005-b239863f7460
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1

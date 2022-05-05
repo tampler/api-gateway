@@ -32,7 +32,7 @@ func MakePublisher(m QueueManager, zl *zap.SugaredLogger, sm SubMap) Publisher {
 	return Publisher{pong: m, zl: zl, sub: sm}
 }
 
-func (p *Publisher) AddHandlers() error {
+func (p *Publisher) AddHandlers(topic string) error {
 
 	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, log aj.Logger, t *aj.Task) (interface{}, error) {
 
@@ -49,7 +49,7 @@ func (p *Publisher) AddHandlers() error {
 		return nil, nil
 	})
 	if err != nil {
-		return fail.Error500(fmt.Sprintf("PONG Handler: %v\n", err.Error()))
+		return fail.Error500(fmt.Sprintf("PONG Handler: %v", err.Error()))
 	}
 
 	// Execute PONG queue

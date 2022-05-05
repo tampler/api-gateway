@@ -46,12 +46,17 @@ type logConfig struct {
 	Output    string
 }
 
+type sdkConfig struct {
+	JobTime int
+}
+
 // AppConfig - top level config
 type AppConfig struct {
 	Log   logConfig
 	Debug debugConfig
 	Http  httpConfig
 	Ajc   ajcConfig
+	Sdk   sdkConfig
 }
 
 // AppInit - reads config file
@@ -103,6 +108,9 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 	cfg.Ajc.Egress.Topic = viper.GetString("ajc.egress.topic")
 	cfg.Ajc.Egress.Concurrency = viper.GetInt("ajc.egress.concurrency")
 	cfg.Ajc.Egress.MetricsPort = viper.GetInt("ajc.egress.metrics_port")
+
+	// SDK
+	cfg.Sdk.JobTime = viper.GetInt("sdk.job_time_sec")
 
 	return nil
 }

@@ -40,3 +40,6 @@ context = "AJC"
 metrics_port = 8091
 name = "PONG"
 topic = "sdk::ec2"
+
+[sdk]
+job_time_sec = 30

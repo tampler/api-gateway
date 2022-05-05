@@ -81,7 +81,7 @@ func main() {
 	// Build Swagger API
 	swagger, err := api.GetSwagger()
 	if err != nil {
-		zl.Fatalf("Error loading swagger spec\n: %s", err)
+		zl.Fatalf("Error loading swagger spec: %s", err)
 	}
 
 	// Clear out the servers array in the swagger spec, that skips validating
@@ -93,12 +93,12 @@ func main() {
 
 	pub := apiserver.MakePublisher(pongMgr, zl, map[uuid.UUID]apiserver.Subscriber{})
 
-	pub.AddHandlers()
+	pub.AddHandlers(cfg.Ajc.Egress.Topic)
 
 	// Add custom context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := apiserver.MakeMyContext(c, &pub, zl)
+			cc := apiserver.MakeMyContext(c, cfg, &pub, zl)
 			return next(cc)
 		}
 	})

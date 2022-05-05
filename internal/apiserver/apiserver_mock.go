@@ -82,12 +82,12 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 
 	pub := MakePublisher(pongMgr, zl, map[uuid.UUID]Subscriber{})
 
-	pub.AddHandlers()
+	pub.AddHandlers(cfg.Ajc.Egress.Topic)
 
 	// Add custom context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := MakeMyContext(c, &pub, zl)
+			cc := MakeMyContext(c, cfg, &pub, zl)
 			return next(cc)
 		}
 	})

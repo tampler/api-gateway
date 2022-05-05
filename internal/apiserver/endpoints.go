@@ -15,10 +15,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-const (
-	topic = "sdk::ec2"
-)
-
 func (s *APIServer) GetMetrics(ctx echo.Context) error {
 	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
@@ -75,26 +71,26 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		},
 	}
 
-	task, err := aj.NewTask(topic, cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
+	task, err := aj.NewTask(cc.cfg.Ajc.Ingress.Topic, cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
 	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to create a task: %v \n", err))
+		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to create a task: %v", err))
 	}
 
-	cc.zl.Debugf("PING adding task %v \n", cmd)
+	cc.zl.Debugf("PING adding task %v", cmd)
 
 	// Submit a task into the PING queue
 	err = s.ping.client.EnqueueTask(context.Background(), task)
 	if err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task"))
+		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task: %v", err))
 	}
 
 	select {
 
-	case <-time.After(8 * time.Second):
-		cc.zl.Errorf("FAIL: to execute command")
+	case <-time.After(time.Duration(cc.cfg.Sdk.JobTime) * time.Second):
+		cc.zl.Errorf("FAIL: request timed out %v", req)
 
 	case <-done:
-		cc.zl.Debugf("Message: %v\n", string(observ.data))
+		cc.zl.Debugf("Success: response: %v", string(observ.data))
 
 	}
 
@@ -123,7 +119,7 @@ func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
 	}
 
-	ctx.zl.Debugf("Sending buf: %v\n", string(buf))
+	ctx.zl.Debugf("Sending buf: %v", string(buf))
 
 	// Now, we have to return the Runner response
 	err = ctx.JSONBlob(http.StatusCreated, buf)

@@ -13,14 +13,15 @@ import (
 // MyContext - custom echo context
 type MyContext struct {
 	echo.Context
-	zl  *zap.SugaredLogger
+	cfg config.AppConfig
 	pub *Publisher
+	zl  *zap.SugaredLogger
 }
 
 // MakeMyContext - factory to create a context
-func MakeMyContext(c echo.Context, pub *Publisher, zl *zap.SugaredLogger) *MyContext {
+func MakeMyContext(c echo.Context, cfg config.AppConfig, pub *Publisher, zl *zap.SugaredLogger) *MyContext {
 	return &MyContext{
-		c, zl, pub,
+		c, cfg, pub, zl,
 	}
 }
 

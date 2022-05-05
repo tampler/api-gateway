@@ -77,4 +77,5 @@ type APIRequest struct {
 type APIResponse struct {
 	JobID uuid.UUID `json:"jobid"`
 	Data  []byte    `json:"data"`
+	Err   error     `json:"err"`
 }

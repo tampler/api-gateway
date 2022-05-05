@@ -32,9 +32,10 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	requestID := uuid.NewV4()
 
 	done := make(chan bool)
+	defer close(done)
 
 	// Add observer
-	observ := MakeBusObserver(requestID, nil, cc.zl, done)
+	observ := MakeBusObserver(requestID, cc.zl, done)
 	cc.pub.AddObserver(requestID, &observ)
 	defer cc.pub.RemoveObserver(requestID)
 
@@ -87,11 +88,9 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task"))
 	}
 
-	cc.zl.Debug("PING task added")
-
 	select {
 
-	case <-time.After(15 * time.Second):
+	case <-time.After(8 * time.Second):
 		cc.zl.Errorf("FAIL: to execute command")
 
 	case <-done:
@@ -99,7 +98,11 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	}
 
-	if observ.data == nil || len(observ.data) == 0 {
+	if observ.err != nil {
+		return sendAPIError(ctx, http.StatusInternalServerError, err.Error())
+	}
+
+	if observ.data == nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, "Empty buffer")
 	}
 
@@ -111,6 +114,7 @@ func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 	// Repack to the full Runner Result
 	out := APIResponse{
 		JobID: uuid.Nil,
+		Err:   nil,
 		Data:  data,
 	}
 

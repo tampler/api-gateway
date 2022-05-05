@@ -14,6 +14,7 @@ import (
 type SubMap = map[uuid.UUID]Subscriber
 
 type BusEvent struct {
+	err  error
 	data []byte
 }
 
@@ -74,19 +75,21 @@ func (p *Publisher) NotifyObserver(id uuid.UUID, e BusEvent) {
 
 // BusObserver - AJC async listener
 type BusObserver struct {
+	zl   *zap.SugaredLogger
 	id   uuid.UUID
 	data []byte
-	zl   *zap.SugaredLogger
+	err  error
 	done chan bool
 }
 
 // MakeBusObserver - factory for Bus observer
-func MakeBusObserver(id uuid.UUID, data []byte, zl *zap.SugaredLogger, done chan bool) BusObserver {
-	return BusObserver{id: id, data: data, zl: zl, done: done}
+func MakeBusObserver(id uuid.UUID, zl *zap.SugaredLogger, done chan bool) BusObserver {
+	return BusObserver{id: id, zl: zl, done: done}
 }
 
 // Notify - notification with unblocking for listeners
 func (bo *BusObserver) Notify(ev BusEvent) {
+	bo.err = ev.err
 	bo.data = ev.data
 	bo.done <- true
 }

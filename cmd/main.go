@@ -142,12 +142,12 @@ func main() {
 	// 		`"latency_human":"${latency_human}","bytes_in":${bytes_in}, "path":"${path}", "referer":"${referer}",` +
 	// 		`"bytes_out":${bytes_out}, "protocol":"${protocol}"}` + "\n",
 	// }
-	logcfg := middleware.LoggerConfig{
-		Format: "status = ${status} time = ${time_rfc3339} lat = ${latency_human} \n",
-	}
+	// logcfg := middleware.LoggerConfig{
+	// 	Format: "status = ${status} time = ${time_rfc3339} lat = ${latency_human} \n",
+	// }
 
 	// Log all requests
-	e.Use(middleware.LoggerWithConfig(logcfg))
+	// e.Use(middleware.LoggerWithConfig(logcfg))
 	// e.Use(middleware.Logger())
 
 	if cfg.Http.AllowCompress {

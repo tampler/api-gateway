@@ -14,8 +14,8 @@ import (
 type SubMap = map[uuid.UUID]Subscriber
 
 type BusEvent struct {
-	err  error
 	data []byte
+	err  string
 }
 
 type Subscriber interface {
@@ -34,21 +34,21 @@ func MakePublisher(m QueueManager, zl *zap.SugaredLogger, sm SubMap) Publisher {
 
 func (p *Publisher) AddHandlers(topic string) error {
 
-	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, log aj.Logger, t *aj.Task) (interface{}, error) {
+	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
 
 		var resp APIResponse
 
 		if err := json.Unmarshal(t.Payload, &resp); err != nil {
+			p.zl.Error(err)
 			return nil, err
 		}
 
-		log.Debugf("PONG SDK response: %v", string(resp.Data))
-
-		p.NotifyObserver(resp.JobID, BusEvent{data: resp.Data})
+		p.NotifyObserver(resp.JobID, BusEvent{data: resp.Data, err: resp.Err})
 
 		return nil, nil
 	})
 	if err != nil {
+		p.zl.Error(err)
 		return fail.Error500(fmt.Sprintf("PONG Handler: %v", err.Error()))
 	}
 
@@ -78,7 +78,7 @@ type BusObserver struct {
 	zl   *zap.SugaredLogger
 	id   uuid.UUID
 	data []byte
-	err  error
+	err  string
 	done chan bool
 }
 

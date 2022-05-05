@@ -94,8 +94,8 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	}
 
-	if observ.err != nil {
-		return sendAPIError(ctx, http.StatusInternalServerError, err.Error())
+	if observ.err != "" {
+		return sendAPIError(ctx, http.StatusInternalServerError, observ.err)
 	}
 
 	if observ.data == nil {
@@ -110,7 +110,7 @@ func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 	// Repack to the full Runner Result
 	out := APIResponse{
 		JobID: uuid.Nil,
-		Err:   nil,
+		Err:   "",
 		Data:  data,
 	}
 

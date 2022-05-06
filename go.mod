@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/casdoor/casdoor-go-sdk v0.4.0
-	github.com/choria-io/asyncjobs v0.0.7
+	github.com/choria-io/asyncjobs v0.0.8-0.20220505123555-1d9f6ef7e6fb
 	github.com/deepmap/oapi-codegen v1.10.1
 	github.com/getkin/kin-openapi v0.94.0
 	github.com/go-playground/validator/v10 v10.11.0
@@ -12,7 +12,7 @@ require (
 	github.com/labstack/echo-contrib v0.12.0
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/nats-io/nats.go v1.15.0
-	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220505155005-b239863f7460
+	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220505203916-8325f14d8b86
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1
@@ -37,7 +37,7 @@ require (
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/klauspost/compress v1.15.2 // indirect
+	github.com/klauspost/compress v1.15.3 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
@@ -79,6 +79,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/neurodyne-web-services/nws-sdk-go => /home/bku/work/go/src/github.com/neurodyne-web-services/nws-sdk-go
-
-replace github.com/choria-io/asyncjobs => /home/bku/work/go/src/github.com/drev74/asyncjobs
+// replace github.com/neurodyne-web-services/nws-sdk-go => /home/bku/work/go/src/github.com/neurodyne-web-services/nws-sdk-go

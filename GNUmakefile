@@ -1,5 +1,5 @@
-PKG_NAME	=		nws-sdk-go
-IMG_NAME 	= 	nws-sdk-api
+PKG_NAME	=		api-gateway
+IMG_NAME 	= 	api-gateway
 FILES			?=	$$(find . -name '*.go' )
 
 default: fmt 
@@ -48,6 +48,6 @@ semgrep:
 	@docker run --rm -v $(PWD):/src returntocorp/semgrep --config=auto --verbose
 
 image:
-	@docker build -f Dockerfile.dev -t tampler/$(IMG_NAME) .
+	@./scripts/build.sh	
 
 .PHONY: test lint vet fmt

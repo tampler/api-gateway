@@ -1,20 +1,33 @@
 FROM golang:1.18.1-alpine as builder 
 
-RUN apk add --no-cache --update && apk add --no-cache git
+RUN apk add --no-cache --update && apk add --no-cache ca-certificates git openssh-client
 
-WORKDIR /go/src/github.com/neurodyne-web-services/nws-sdk-go
+# add key on build
+ARG SSH_PRIV_KEY
+
+RUN mkdir /root/.ssh/
+RUN echo "${SSH_PRIV_KEY}" > /root/.ssh/id_rsa
+RUN cat /root/.ssh/id_rsa
+RUN chmod 0400 /root/.ssh/id_rsa
+
+# make sure your domain is accepted
+RUN touch /root/.ssh/known_hosts
+RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
+RUN git config --global url.ssh://git@github.com/.insteadOf https://github.com/
+
+WORKDIR /go/src/github.com/neurodyne-web-services/api-gateway
 
 COPY . .
 
 RUN go mod tidy --compat=1.18
 
-RUN cd cmd/cloudcontrol && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o api
+RUN cd cmd/ && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o api -ldflags="-s -w -extldflags=-static"
 
 FROM alpine:latest 
 
 WORKDIR /app
 
-COPY --from=builder /go/src/github.com/neurodyne-web-services/nws-sdk-go/cmd/cloudcontrol/api .
+COPY --from=builder /go/src/github.com/neurodyne-web-services/api-gateway/cmd/api .
 
 EXPOSE 8084 
 ENTRYPOINT ["/app/api"]

@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  sdk:
+    image: tampler/nws-api-gateway
+    container_name: gateway
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        SSH_PRIV_KEY: ${SSH_PRIV_KEY}
+    restart: unless-stopped
+    network_mode: bridge
+    ports:
+      - 8084:8084
+    volumes:
+      - ./configs/app.toml:/app/configs/app.toml:ro
+      - ./configs/nats:/app/configs/nats:ro
+    environment:
+      - XDG_CONFIG_HOME=/app/configs
+    external_links:
+      - sdk

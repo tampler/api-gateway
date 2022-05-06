@@ -7,10 +7,10 @@ ARG SSH_PRIV_KEY
 
 RUN mkdir /root/.ssh/
 RUN echo "${SSH_PRIV_KEY}" > /root/.ssh/id_rsa
-RUN cat /root/.ssh/id_rsa
 RUN chmod 0400 /root/.ssh/id_rsa
+RUN cat /root/.ssh/id_rsa
 
-# make sure your domain is accepted
+# update git ssh settings
 RUN touch /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 RUN git config --global url.ssh://git@github.com/.insteadOf https://github.com/

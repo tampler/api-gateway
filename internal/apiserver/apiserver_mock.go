@@ -11,6 +11,7 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"github.com/neurodyne-web-services/api-gateway/internal/nats"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	uuid "github.com/satori/go.uuid"
 )
@@ -43,9 +44,15 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
+	// Connect to NATS
+	nc, err := nats.MakeNatsConnect()
+	if err != nil {
+		log.Fatalf("NATS connect failed %s \n", err.Error())
+	}
+
 	// Input queue
 	pingClient, err := aj.NewClient(
-		aj.NatsContext(cfg.Ajc.Ingress.Context),
+		aj.NatsConn(nc),
 		aj.BindWorkQueue(cfg.Ajc.Ingress.Name),
 		aj.ClientConcurrency(cfg.Ajc.Ingress.Concurrency),
 		aj.PrometheusListenPort(cfg.Ajc.Ingress.MetricsPort),
@@ -57,7 +64,7 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 
 	// Output queue
 	pongClient, err := aj.NewClient(
-		aj.NatsContext(cfg.Ajc.Egress.Context),
+		aj.NatsConn(nc),
 		aj.BindWorkQueue(cfg.Ajc.Egress.Name),
 		aj.ClientConcurrency(cfg.Ajc.Egress.Concurrency),
 		aj.PrometheusListenPort(cfg.Ajc.Egress.MetricsPort),

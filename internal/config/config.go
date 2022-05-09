@@ -28,7 +28,6 @@ type debugConfig struct {
 }
 
 type queueConfig struct {
-	Context     string
 	Name        string
 	Topic       string
 	Concurrency int
@@ -96,14 +95,12 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 	cfg.Ajc.TaskTimeout = viper.GetInt("ajc.task_timeout_min")
 
 	// Ping queue
-	cfg.Ajc.Ingress.Context = viper.GetString("ajc.ingress.context")
 	cfg.Ajc.Ingress.Name = viper.GetString("ajc.ingress.name")
 	cfg.Ajc.Ingress.Topic = viper.GetString("ajc.ingress.topic")
 	cfg.Ajc.Ingress.Concurrency = viper.GetInt("ajc.ingress.concurrency")
 	cfg.Ajc.Ingress.MetricsPort = viper.GetInt("ajc.ingress.metrics_port")
 
 	// Pong queue
-	cfg.Ajc.Egress.Context = viper.GetString("ajc.egress.context")
 	cfg.Ajc.Egress.Name = viper.GetString("ajc.egress.name")
 	cfg.Ajc.Egress.Topic = viper.GetString("ajc.egress.topic")
 	cfg.Ajc.Egress.Concurrency = viper.GetInt("ajc.egress.concurrency")

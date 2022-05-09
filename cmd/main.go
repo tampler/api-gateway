@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/casdoor/casdoor-go-sdk/auth"
@@ -21,7 +22,9 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"github.com/neurodyne-web-services/api-gateway/internal/nats"
 	uuid "github.com/satori/go.uuid"
+	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )
 
@@ -44,9 +47,15 @@ func main() {
 	defer logger.Sync()
 	zl := logger.Sugar()
 
+	// Connect to NATS
+	nc, err := nats.MakeNatsConnect()
+	if err != nil {
+		log.Fatalf("NATS connect failed %s \n", err.Error())
+	}
+
 	// Input queue
 	pingClient, err := aj.NewClient(
-		aj.NatsContext(cfg.Ajc.Ingress.Context),
+		aj.NatsConn(nc),
 		aj.BindWorkQueue(cfg.Ajc.Ingress.Name),
 		aj.ClientConcurrency(cfg.Ajc.Ingress.Concurrency),
 		aj.PrometheusListenPort(cfg.Ajc.Ingress.MetricsPort),
@@ -58,7 +67,7 @@ func main() {
 
 	// Output queue
 	pongClient, err := aj.NewClient(
-		aj.NatsContext(cfg.Ajc.Egress.Context),
+		aj.NatsConn(nc),
 		aj.BindWorkQueue(cfg.Ajc.Egress.Name),
 		aj.ClientConcurrency(cfg.Ajc.Egress.Concurrency),
 		aj.PrometheusListenPort(cfg.Ajc.Egress.MetricsPort),
@@ -199,6 +208,8 @@ func main() {
 	// We now register our cloudcontrol above as the handler for the interface
 	api.RegisterHandlers(e, cc)
 
+	showDebugInfo(zl.Desugar())
+
 	// And we serve HTTP until the world ends.
 	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Http.Port)))
 }
@@ -208,4 +219,9 @@ func restricted(c echo.Context) error {
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
 	return c.String(http.StatusOK, "Welcome "+name+"!")
+}
+
+// showDebugInfo - this prints envs to ease deployment and debug
+func showDebugInfo(zl *zap.Logger) {
+	zl.Info("NATS URL: ", zap.String("NATS_URL", os.Getenv("NATS_URL")))
 }

@@ -22,7 +22,6 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
-	"github.com/neurodyne-web-services/api-gateway/internal/nats"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
@@ -48,7 +47,7 @@ func main() {
 	zl := logger.Sugar()
 
 	// Connect to NATS
-	nc, err := nats.MakeNatsConnect()
+	nc, err := apiserver.MakeNatsConnect()
 	if err != nil {
 		log.Fatalf("NATS connect failed %s \n", err.Error())
 	}

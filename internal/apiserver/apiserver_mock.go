@@ -11,7 +11,6 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
-	"github.com/neurodyne-web-services/api-gateway/internal/nats"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	uuid "github.com/satori/go.uuid"
 )
@@ -21,7 +20,9 @@ const (
 	CONFIG_NAME = "app"
 )
 
-func MakeAPIServerMock() (*echo.Echo, error) {
+func MakeAPIServerMock() (testServer, error) {
+
+	var serv testServer
 
 	// Build a global config
 	var cfg config.AppConfig
@@ -37,7 +38,7 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 
 	swagger, err := api.GetSwagger()
 	if err != nil {
-		return nil, fail.Error500(err.Error())
+		return serv, fail.Error500(err.Error())
 	}
 
 	// Clear out the servers array in the swagger spec, that skips validating
@@ -45,7 +46,7 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	swagger.Servers = nil
 
 	// Connect to NATS
-	nc, err := nats.MakeNatsConnect()
+	nc, err := MakeNatsConnect()
 	if err != nil {
 		log.Fatalf("NATS connect failed %s \n", err.Error())
 	}
@@ -109,7 +110,23 @@ func MakeAPIServerMock() (*echo.Echo, error) {
 	// We now register our cc above as the handler for the interface
 	api.RegisterHandlers(e, cc)
 
-	return e, nil
+	// Setup a JetStream
+	js, err := nc.JetStream()
+	if err != nil {
+		zl.Fatal(err)
+	}
+
+	// Build the test server
+	serv.echo = e
+
+	kv, err := js.KeyValue(cfg.Sdk.Bucket)
+	if err != nil {
+		zl.Fatal(err)
+	}
+
+	serv.kv = kv
+
+	return serv, nil
 }
 
 func runServer(server *echo.Echo, port int) {

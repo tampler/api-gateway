@@ -47,6 +47,7 @@ type logConfig struct {
 
 type sdkConfig struct {
 	JobTime int
+	Bucket  string
 }
 
 // AppConfig - top level config
@@ -108,6 +109,7 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 
 	// SDK
 	cfg.Sdk.JobTime = viper.GetInt("sdk.job_time_sec")
+	cfg.Sdk.Bucket = viper.GetString("sdk.kv_bucket_name")
 
 	return nil
 }

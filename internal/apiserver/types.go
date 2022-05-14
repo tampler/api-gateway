@@ -12,14 +12,15 @@ import (
 )
 
 const (
-	zoneCommand = "NWS::EC2::Zone"
-	domCommand  = "NWS::EC2::Domain"
-	accCommand  = "NWS::EC2::Account"
-	sshCommand  = "NWS::EC2::SSHKeypair"
-	vpcCommand  = "NWS::EC2::VPC"
-	netCommand  = "NWS::EC2::Network"
-	tmplCommand = "NWS::EC2::Template"
-	instCommand = "NWS::EC2::Instance"
+	zoneCommand     = "NWS::EC2::Zone"
+	domCommand      = "NWS::EC2::Domain"
+	accCommand      = "NWS::EC2::Account"
+	sshCommand      = "NWS::EC2::SSHKeypair"
+	vpcCommand      = "NWS::EC2::VPC"
+	netCommand      = "NWS::EC2::Network"
+	netOfferCommand = "NWS::EC2::NetOffer"
+	tmplCommand     = "NWS::EC2::Template"
+	instCommand     = "NWS::EC2::Instance"
 
 	// ACS internals
 	tmplFilter = "all"

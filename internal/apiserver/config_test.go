@@ -3,6 +3,7 @@ package apiserver
 const (
 	portStart = 8085
 	portEnd   = 9085
+	sleepTime = 200
 
 	testZone   = "Sandbox-simulator"
 	testDomain = "ROOT"
@@ -23,6 +24,7 @@ const (
 	vpcOfferID = "023ec0e3-0ed4-447e-8c23-201c2bbf26b6" // Default VPC offering
 
 	// Network
+	netOffer   = "privateVPC"
 	netName    = "net-vpc-0"
 	netCidr4   = "10.0.1.0/30"
 	netCidr6   = "2002::1234:abcd:ffff:c0a8:101/64"

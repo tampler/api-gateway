@@ -71,14 +71,22 @@ func (p *Publisher) RemoveObserver(id uuid.UUID) {
 	// p.zl.Debugf("Removing observer: %v", id)
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	p.sub[id] = nil
+
+	// Safe access to map
+	if _, ok := p.sub[id]; ok {
+		p.sub[id] = nil
+	}
 }
 
 func (p *Publisher) NotifyObserver(id uuid.UUID, e BusEvent) {
 	// p.zl.Debugf("Notifying observer: %v", id)
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	p.sub[id].Notify(e)
+
+	// Safe access to map
+	if _, ok := p.sub[id]; ok {
+		p.sub[id].Notify(e)
+	}
 }
 
 // BusObserver - AJC async listener
@@ -98,6 +106,14 @@ func MakeBusObserver(id uuid.UUID, zl *zap.SugaredLogger, done chan bool) BusObs
 // Notify - notification with unblocking for listeners
 func (bo *BusObserver) Notify(ev BusEvent) {
 	bo.err = ev.err
-	bo.data = ev.data
+
+	// pass an empty buffer to avoid exceptions for empty buffer response from SDK
+	if ev.data != nil {
+		bo.data = ev.data
+	} else {
+		ev.data = []byte{}
+	}
+
+	// Confirm process finish
 	bo.done <- true
 }

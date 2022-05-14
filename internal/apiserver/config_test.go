@@ -8,8 +8,6 @@ const (
 	testZone   = "Sandbox-simulator"
 	testDomain = "ROOT"
 	testAcc    = "admin"
-	zoneID     = "cc4ec379-7f47-401f-8c6c-2a993b13bb2c"
-	domainID   = "7aa21363-90ec-11ec-83a4-0242ac110003"
 
 	//ssh
 	sshKeyName = "bku-ssh"
@@ -20,8 +18,7 @@ const (
 	updVpcName = "upd-test-vpc"
 	vpcCidr4   = "10.0.1.0/24"
 	emptyVPCID = ""
-	vpcOffer   = "Default VPC offering"
-	vpcOfferID = "023ec0e3-0ed4-447e-8c23-201c2bbf26b6" // Default VPC offering
+	vpcOffer   = "defaultVPC"
 
 	// Network
 	netOffer   = "privateVPC"

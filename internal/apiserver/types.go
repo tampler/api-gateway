@@ -17,6 +17,7 @@ const (
 	accCommand      = "NWS::EC2::Account"
 	sshCommand      = "NWS::EC2::SSHKeypair"
 	vpcCommand      = "NWS::EC2::VPC"
+	vpcOfferCommand = "NWS::EC2::VPCOffer"
 	netCommand      = "NWS::EC2::Network"
 	netOfferCommand = "NWS::EC2::NetOffer"
 	osOfferCommand  = "NWS::EC2::OSOffer"

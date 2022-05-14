@@ -2,7 +2,6 @@ package apiserver
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -30,11 +29,11 @@ func Test_ssh(t *testing.T) {
 		params  []string
 	}{
 		// SSH
-		{"EC2 SSH List", "List", "NWS::EC2::SSHKeypair", []string{domainID, testAcc}},
-		{"EC2 SSH Create", "Create", "NWS::EC2::SSHKeypair", []string{sshKeyName, domainID, testAcc, pubkey}},
-		{"EC2 SSH Read", "Read", "NWS::EC2::SSHKeypair", []string{domainID, testAcc}},
-		{"EC2 SSH Delete", "Delete", "NWS::EC2::SSHKeypair", []string{sshKeyName, domainID, testAcc}},
-		{"EC2 SSH Nuke", "Nuke", "NWS::EC2::SSHKeypair", []string{testAcc, domainID}},
+		{"EC2 SSH List", "List", sshCommand, []string{domainID, testAcc}},
+		{"EC2 SSH Create", "Create", sshCommand, []string{sshKeyName, domainID, testAcc, pubkey}},
+		{"EC2 SSH Read", "Read", sshCommand, []string{domainID, testAcc}},
+		{"EC2 SSH Delete", "Delete", sshCommand, []string{sshKeyName, domainID, testAcc}},
+		{"EC2 SSH Nuke", "Nuke", sshCommand, []string{testAcc, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -53,8 +52,6 @@ func Test_ssh(t *testing.T) {
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
 			assert.Equal(t, http.StatusCreated, res.StatusCode())
 			assert.NotEmpty(t, res.Body)
-
-			log.Printf("*** Got test response: %v\n", string(res.Body))
 		})
 		time.Sleep(sleepTime * time.Millisecond)
 	}
@@ -95,8 +92,6 @@ func TestDS_domain(t *testing.T) {
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
 			assert.Equal(t, http.StatusCreated, res.StatusCode())
 			assert.NotEmpty(t, res.Body)
-
-			log.Printf("*** Got test response: %v\n", string(res.Body))
 		})
 		time.Sleep(sleepTime * time.Millisecond)
 	}
@@ -227,7 +222,6 @@ func Test_net(t *testing.T) {
 
 					netOfferID, err = jsonparser.GetString(data, "id")
 					assert.NoError(t, err)
-					fmt.Printf("**** NET offer ID: %s\n", netOfferID)
 				}
 
 				if d.command == vpcCommand {
@@ -244,6 +238,92 @@ func Test_net(t *testing.T) {
 						netID, err = jsonparser.GetString(value, "id", "id")
 						assert.NoError(t, err)
 					}, "items")
+					assert.NoError(t, err)
+				}
+			}
+		})
+		time.Sleep(sleepTime * time.Millisecond)
+	}
+}
+
+func Test_tmpl(t *testing.T) {
+	port := rand.Intn(portEnd-portStart) + portStart
+
+	// Launch Server
+	server, err := MakeAPIServerMock()
+	assert.NoErrorf(t, err, "Failed to create a server")
+
+	go runServer(server.echo, port)
+
+	var osTypeID, tmplID string
+
+	data := []struct {
+		name    string
+		action  string
+		command string
+		params  []string
+	}{
+		{"EC2 Tmpl List", "List", tmplCommand, []string{zoneID, domainID, testAcc, tmplFilter}},
+		{"EC2 OS Offer Resolve", "Resolve", osOfferCommand, []string{ostype}},
+		{"EC2 Tmpl Create", "Create", tmplCommand, []string{tmplName, zoneID, domainID, testAcc}},
+		{"EC2 Tmpl Resolve", "Resolve", tmplCommand, []string{zoneID, domainID, testAcc, tmplFilter, tmplName}},
+		{"EC2 Tmpl Read", "Read", tmplCommand, []string{}},
+		{"EC2 Tmpl Delete", "Delete", tmplCommand, []string{}},
+		{"EC2 Tmpl Nuke", "Nuke", tmplCommand, []string{testAcc, tmplFilter, zoneID, domainID}},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			var req api.CloudControlClient
+
+			client, err := api.NewClientWithResponses(getEndpoint(port))
+			assert.NoError(t, err)
+			assert.NotNil(t, client)
+
+			req.Client = *client
+			req.Action = d.action
+			req.Command = d.command
+			req.Params = d.params
+
+			// Append RUN Time params, which are NOT available in compile time
+			if d.action == "Create" {
+				req.Params = append(req.Params, osTypeID, tmplURL)
+			}
+
+			if d.action == "Read" {
+				req.Params = append(req.Params, tmplID, tmplFilter)
+			}
+
+			if d.action == "Delete" {
+				req.Params = append(req.Params, tmplID, zoneID)
+			}
+
+			res, err := req.MakeRequest()
+			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
+			assert.Equal(t, http.StatusCreated, res.StatusCode())
+			assert.NotEmpty(t, res.Body)
+
+			data, err := utils.DecodeJSONBytes(res.Body)
+			assert.NoError(t, err)
+
+			if d.action == "Resolve" {
+
+				if d.command == osOfferCommand {
+					osTypeID, err = jsonparser.GetString(data, "id")
+					assert.NoError(t, err)
+				}
+
+				if d.command == tmplCommand {
+
+					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+
+						if string(value) != jsonparser.Null.String() {
+							tmplID, err = jsonparser.GetString(value, "id", "id")
+							assert.NoError(t, err)
+						}
+
+						assert.NoError(t, err)
+					}, "items")
+
 					assert.NoError(t, err)
 				}
 			}

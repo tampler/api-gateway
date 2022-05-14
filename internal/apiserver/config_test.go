@@ -32,4 +32,18 @@ const (
 	netDomain  = "my.local"
 	updNetName = "upd-foo"
 	updNetCidr = "10.0.1.0/28"
+
+	// Template
+	tmplName        = "My Ubuntu"
+	updTemplateName = "My Upd Ubuntu"
+	ostype          = "Ubuntu 21.04"
+	tmplFilter      = "all"
+	tmplURL         = "http://dl.openvm.eu/cloudstack/macchinina/x86_64/macchinina-xen.vhd.bz2"
+
+	// Instance
+	instName    = "ubuntu-vm0"
+	updInstName = "upd-vm0"
+
+	instServiceOffer = "Small Instance"
+	instDiskOffer    = "Small"
 )

@@ -19,11 +19,9 @@ const (
 	vpcCommand      = "NWS::EC2::VPC"
 	netCommand      = "NWS::EC2::Network"
 	netOfferCommand = "NWS::EC2::NetOffer"
+	osOfferCommand  = "NWS::EC2::OSOffer"
 	tmplCommand     = "NWS::EC2::Template"
 	instCommand     = "NWS::EC2::Instance"
-
-	// ACS internals
-	tmplFilter = "all"
 )
 
 // MyContext - custom echo context

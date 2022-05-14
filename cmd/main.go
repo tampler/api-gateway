@@ -207,7 +207,7 @@ func main() {
 	// We now register our cloudcontrol above as the handler for the interface
 	api.RegisterHandlers(e, cc)
 
-	showDebugInfo(zl.Desugar())
+	showDebugInfo(zl.Desugar(), &cfg)
 
 	// And we serve HTTP until the world ends.
 	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", cfg.Http.Port)))
@@ -221,6 +221,7 @@ func restricted(c echo.Context) error {
 }
 
 // showDebugInfo - this prints envs to ease deployment and debug
-func showDebugInfo(zl *zap.Logger) {
+func showDebugInfo(zl *zap.Logger, cfg *config.AppConfig) {
 	zl.Info("NATS URL: ", zap.String("NATS_URL", os.Getenv("NATS_URL")))
+	zl.Info("Task timeout:", zap.Int("timeout, sec", cfg.Ajc.TaskTimeout))
 }

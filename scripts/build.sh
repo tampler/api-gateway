@@ -5,3 +5,5 @@ IMG_NAME="nws-api-gateway"
 
 #docker build --build-arg SSH_PRIV_KEY="$(cat ~/.ssh/id_rsa)" -f Dockerfile.dev -t ${ORG_NAME}/${IMG_NAME} .
 SSH_PRIV_KEY="$(cat ~/.ssh/id_rsa)" docker-compose build
+
+docker push ${ORG_NAME}/${IMG_NAME}

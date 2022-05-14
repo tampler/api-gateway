@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	testBucket = "mybuck"
+	testBucket = "ec2buck"
 	testPet    = "Teddy"
 )
 

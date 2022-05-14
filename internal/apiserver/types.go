@@ -5,9 +5,24 @@ import (
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/labstack/echo/v4"
+	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
+)
+
+const (
+	zoneCommand = "NWS::EC2::Zone"
+	domCommand  = "NWS::EC2::Domain"
+	accCommand  = "NWS::EC2::Account"
+	sshCommand  = "NWS::EC2::SSHKeypair"
+	vpcCommand  = "NWS::EC2::VPC"
+	netCommand  = "NWS::EC2::Network"
+	tmplCommand = "NWS::EC2::Template"
+	instCommand = "NWS::EC2::Instance"
+
+	// ACS internals
+	tmplFilter = "all"
 )
 
 // MyContext - custom echo context
@@ -47,6 +62,11 @@ type APIServer struct {
 	cfg  *config.AppConfig
 	ping QueueManager
 	pong QueueManager
+}
+
+type testServer struct {
+	echo *echo.Echo
+	kv   nats.KeyValue
 }
 
 // MakeAPIServer - APIServer factory

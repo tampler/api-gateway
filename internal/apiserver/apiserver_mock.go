@@ -56,7 +56,6 @@ func MakeAPIServerMock() (testServer, error) {
 		aj.NatsConn(nc),
 		aj.BindWorkQueue(cfg.Ajc.Ingress.Name),
 		aj.ClientConcurrency(cfg.Ajc.Ingress.Concurrency),
-		aj.PrometheusListenPort(cfg.Ajc.Ingress.MetricsPort),
 		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
 
 	if err != nil {
@@ -68,7 +67,6 @@ func MakeAPIServerMock() (testServer, error) {
 		aj.NatsConn(nc),
 		aj.BindWorkQueue(cfg.Ajc.Egress.Name),
 		aj.ClientConcurrency(cfg.Ajc.Egress.Concurrency),
-		aj.PrometheusListenPort(cfg.Ajc.Egress.MetricsPort),
 		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
 
 	if err != nil {

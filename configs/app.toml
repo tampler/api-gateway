@@ -40,4 +40,5 @@ name = "PONG"
 topic = "sdk::ec2"
 
 [sdk]
-job_time_sec = 30
+job_time_sec = 25
+kv_bucket_name = "ec2buck"

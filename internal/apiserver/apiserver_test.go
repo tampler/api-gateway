@@ -189,7 +189,7 @@ func Test_net(t *testing.T) {
 
 	go runServer(server.echo, port)
 
-	var zoneID, domainID, netID, netOfferID, vpcID, vpcOfferID string
+	var zoneID, domainID, netID, vpcID, vpcOfferID, netOfferID string
 
 	tmp, err := server.kv.Get("zoneID")
 	assert.NoError(t, err)
@@ -201,6 +201,16 @@ func Test_net(t *testing.T) {
 
 	domainID = string(tmp.Value())
 
+	tmp, err = server.kv.Get("vpcOfferID")
+	assert.NoError(t, err)
+
+	vpcOfferID = string(tmp.Value())
+
+	tmp, err = server.kv.Get("netOfferID")
+	assert.NoError(t, err)
+
+	netOfferID = string(tmp.Value())
+
 	data := []struct {
 		name    string
 		action  string
@@ -210,12 +220,12 @@ func Test_net(t *testing.T) {
 		{"EC2 Net List", "List", netCommand, []string{zoneID, domainID, testAcc}},
 		{"EC2 VPC Create", "Create", vpcCommand, []string{vpcName, zoneID, domainID, testAcc, vpcOfferID, vpcCidr4, netDomain}},
 		{"EC2 VPC ID Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, testAcc, vpcName}},
-		{"EC2 Net Offer ID Resolve", "Resolve", netOfferCommand, []string{netOffer}},
-		{"EC2 Net Create", "Create", netCommand, []string{netName, zoneID, domainID, testAcc, netCidr4, emptyCIDR6}},
+		{"EC2 Net Create", "Create", netCommand, []string{netName, zoneID, domainID, testAcc, netCidr4, emptyCIDR6, netOfferID, netDomain}},
 		{"EC2 Net Resolve", "Resolve", netCommand, []string{zoneID, domainID, testAcc, netName}},
 		{"EC2 Net Read", "Read", netCommand, []string{}},
 		{"EC2 Net Delete", "Delete", netCommand, []string{}},
 		{"EC2 Net Nuke", "Nuke", netCommand, []string{testAcc, zoneID, domainID}},
+		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{testAcc, zoneID, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -236,7 +246,7 @@ func Test_net(t *testing.T) {
 			}
 
 			if d.action == "Create" {
-				req.Params = append(req.Params, netOfferID, netDomain, vpcID)
+				req.Params = append(req.Params, vpcID)
 			}
 
 			res, err := req.MakeRequest()
@@ -250,13 +260,7 @@ func Test_net(t *testing.T) {
 			// Resolve for diff IDs may be in diff test cases
 			if d.action == "Resolve" {
 
-				// parse  Network Offer ID
-				if d.command == netOfferCommand {
-
-					netOfferID, err = jsonparser.GetString(data, "id")
-					assert.NoError(t, err)
-				}
-
+				// Resolves VPC ID
 				if d.command == vpcCommand {
 
 					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -266,6 +270,7 @@ func Test_net(t *testing.T) {
 					assert.NoError(t, err)
 				}
 
+				// Resolves NET ID
 				if d.command == netCommand {
 					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 						netID, err = jsonparser.GetString(value, "id", "id")
@@ -288,7 +293,7 @@ func Test_tmpl(t *testing.T) {
 
 	go runServer(server.echo, port)
 
-	var zoneID, domainID, osTypeID, tmplID string
+	var zoneID, domainID, osOfferID, tmplID string
 
 	tmp, err := server.kv.Get("zoneID")
 	assert.NoError(t, err)
@@ -300,6 +305,11 @@ func Test_tmpl(t *testing.T) {
 
 	domainID = string(tmp.Value())
 
+	tmp, err = server.kv.Get("osOfferID")
+	assert.NoError(t, err)
+
+	osOfferID = string(tmp.Value())
+
 	data := []struct {
 		name    string
 		action  string
@@ -307,7 +317,6 @@ func Test_tmpl(t *testing.T) {
 		params  []string
 	}{
 		{"EC2 Tmpl List", "List", tmplCommand, []string{zoneID, domainID, testAcc, tmplFilter}},
-		{"EC2 OS Offer Resolve", "Resolve", osOfferCommand, []string{ostype}},
 		{"EC2 Tmpl Create", "Create", tmplCommand, []string{tmplName, zoneID, domainID, testAcc}},
 		{"EC2 Tmpl Resolve", "Resolve", tmplCommand, []string{zoneID, domainID, testAcc, tmplFilter, tmplName}},
 		{"EC2 Tmpl Read", "Read", tmplCommand, []string{}},
@@ -329,7 +338,7 @@ func Test_tmpl(t *testing.T) {
 
 			// Append RUN Time params, which are NOT available in compile time
 			if d.action == "Create" {
-				req.Params = append(req.Params, osTypeID, tmplURL)
+				req.Params = append(req.Params, osOfferID, tmplURL)
 			}
 
 			if d.action == "Read" {
@@ -351,7 +360,7 @@ func Test_tmpl(t *testing.T) {
 			if d.action == "Resolve" {
 
 				if d.command == osOfferCommand {
-					osTypeID, err = jsonparser.GetString(data, "id")
+					osOfferID, err = jsonparser.GetString(data, "id")
 					assert.NoError(t, err)
 				}
 
@@ -384,7 +393,10 @@ func Test_inst(t *testing.T) {
 
 	go runServer(server.echo, port)
 
-	var zoneID, domainID, osTypeID, tmplID, vpcOfferID string
+	var zoneID, domainID, osOfferID, vpcOfferID, netOfferID, instOfferID string
+	var vpcID, netID, tmplID, instID string
+
+	fmt.Println(instOfferID)
 
 	tmp, err := server.kv.Get("zoneID")
 	assert.NoError(t, err)
@@ -396,22 +408,51 @@ func Test_inst(t *testing.T) {
 
 	domainID = string(tmp.Value())
 
+	tmp, err = server.kv.Get("vpcOfferID")
+	assert.NoError(t, err)
+
+	vpcOfferID = string(tmp.Value())
+
+	tmp, err = server.kv.Get("netOfferID")
+	assert.NoError(t, err)
+
+	netOfferID = string(tmp.Value())
+
+	tmp, err = server.kv.Get("osOfferID")
+	assert.NoError(t, err)
+
+	osOfferID = string(tmp.Value())
+
+	tmp, err = server.kv.Get("instOfferID")
+	assert.NoError(t, err)
+
+	instOfferID = string(tmp.Value())
+
+	fmt.Println(vpcOfferID)
+	fmt.Println(netOfferID)
+
 	data := []struct {
 		name    string
 		action  string
 		command string
 		params  []string
 	}{
-		// {"EC2 Inst List", "List", instCommand, []string{zoneID, domainID, testAcc}},
-		// {"EC2 SSH Create", "Create", sshCommand, []string{sshKeyName, domainID, testAcc, pubkey}},
+		{"EC2 Inst List", "List", instCommand, []string{zoneID, domainID, testAcc}},
+		{"EC2 SSH Create", "Create", sshCommand, []string{sshKeyName, domainID, testAcc, pubkey}},
 		{"EC2 VPC Create", "Create", vpcCommand, []string{vpcName, zoneID, domainID, testAcc, vpcOfferID, vpcCidr4, netDomain}},
-		{"EC2 Net Create", "Create", netCommand, []string{netName, zoneID, domainID, testAcc, netCidr4, emptyCIDR6}},
-		// {"EC2 Tmpl Create", "Create", tmplCommand, []string{tmplName, zoneID, domainID, testAcc}},
-		// {"EC2 Inst Create", "Create", instCommand, []string{instName, zoneID, domainID, testAcc, tmplID}},
-		// {"EC2 Inst Resolve", "Resolve", tmplCommand, []string{zoneID, domainID, testAcc,  tmplName}},
-		// {"EC2 Inst Read", "Read", tmplCommand, []string{}},
-		// {"EC2 Inst Delete", "Delete", tmplCommand, []string{}},
-		// {"EC2 Inst Nuke", "Nuke", tmplCommand, []string{testAcc,  zoneID, domainID}},
+		{"EC2 VPC Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, testAcc, vpcName}},
+		{"EC2 Net Create", "Create", netCommand, []string{netName, zoneID, domainID, testAcc, netCidr4, emptyCIDR6, netOfferID, netDomain}},
+		{"EC2 Net Resolve", "Resolve", netCommand, []string{zoneID, domainID, testAcc, netName}},
+		{"EC2 Tmpl Create", "Create", tmplCommand, []string{tmplName, zoneID, domainID, testAcc}},
+		{"EC2 Tmpl Resolve", "Resolve", tmplCommand, []string{zoneID, domainID, testAcc, tmplFilter, tmplName}},
+		{"EC2 Inst Create", "Create", instCommand, []string{instName, zoneID, domainID, testAcc}},
+		{"EC2 Inst Resolve", "Resolve", instCommand, []string{zoneID, domainID, testAcc}},
+		{"EC2 Inst Read", "Read", instCommand, []string{}},
+		{"EC2 Inst Delete", "Delete", instCommand, []string{}},
+		{"EC2 Inst Nuke", "Nuke", instCommand, []string{testAcc, zoneID, domainID}},
+		{"EC2 Tmpl Nuke", "Nuke", tmplCommand, []string{testAcc, tmplFilter, zoneID, domainID}},
+		{"EC2 Net Nuke", "Nuke", netCommand, []string{testAcc, zoneID, domainID}},
+		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{testAcc, zoneID, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -428,15 +469,37 @@ func Test_inst(t *testing.T) {
 
 			// Append RUN Time params, which are NOT available in compile time
 			if d.action == "Create" {
-				req.Params = append(req.Params, osTypeID, tmplURL)
+
+				if d.command == netCommand {
+					req.Params = append(req.Params, vpcID)
+				}
+
+				if d.command == tmplCommand {
+					req.Params = append(req.Params, osOfferID, tmplURL)
+				}
+
+				if d.command == instCommand {
+					req.Params = append(req.Params, tmplID, instOfferID, sshKeyName, fmt.Sprint(diskSizeGB), fmt.Sprintf("net::%s", netID))
+				}
+			}
+
+			if d.action == "Resolve" {
+				if d.command == instCommand {
+					req.Params = append(req.Params, tmplID, instName)
+				}
 			}
 
 			if d.action == "Read" {
-				req.Params = append(req.Params, tmplID, tmplFilter)
+				if d.command == tmplCommand {
+					req.Params = append(req.Params, tmplID, tmplFilter)
+				}
+				if d.command == instCommand {
+					req.Params = append(req.Params, instID)
+				}
 			}
 
 			if d.action == "Delete" {
-				req.Params = append(req.Params, tmplID, zoneID)
+				req.Params = append(req.Params, instID)
 			}
 
 			res, err := req.MakeRequest()
@@ -449,11 +512,27 @@ func Test_inst(t *testing.T) {
 
 			if d.action == "Resolve" {
 
-				if d.command == osOfferCommand {
-					osTypeID, err = jsonparser.GetString(data, "id")
+				// Resolve VPC ID
+				if d.command == vpcCommand {
+
+					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+						vpcID, err = jsonparser.GetString(value, "id", "id")
+						assert.NoError(t, err)
+					}, "items")
 					assert.NoError(t, err)
 				}
 
+				// Resolve Net ID
+				if d.command == netCommand {
+
+					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+						netID, err = jsonparser.GetString(value, "id", "id")
+						assert.NoError(t, err)
+					}, "items")
+					assert.NoError(t, err)
+				}
+
+				// Resolve Templ ID
 				if d.command == tmplCommand {
 
 					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -463,6 +542,21 @@ func Test_inst(t *testing.T) {
 							assert.NoError(t, err)
 						}
 
+						assert.NoError(t, err)
+					}, "items")
+
+					assert.NoError(t, err)
+				}
+
+				// Resolve Inst ID
+				if d.command == instCommand {
+
+					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+
+						if string(value) != jsonparser.Null.String() {
+							instID, err = jsonparser.GetString(value, "id", "id")
+							assert.NoError(t, err)
+						}
 						assert.NoError(t, err)
 					}, "items")
 
@@ -483,7 +577,7 @@ func Test_offerings(t *testing.T) {
 
 	go runServer(server.echo, port)
 
-	var zoneID, domainID, vpcOfferID string
+	var zoneID, domainID, vpcOfferID, netOfferID, osOfferID, instOfferID string
 
 	data := []struct {
 		name    string
@@ -494,6 +588,9 @@ func Test_offerings(t *testing.T) {
 		{"EC2 Zone ID", "Resolve", zoneCommand, []string{testZone}},
 		{"EC2 Domain ID", "Resolve", domCommand, []string{testDomain}},
 		{"EC2 VPC Offer ID", "Resolve", vpcOfferCommand, []string{vpcOffer}},
+		{"EC2 Net Offer ID", "Resolve", netOfferCommand, []string{netOffer}},
+		{"EC2 OS Offer ID", "Resolve", osOfferCommand, []string{osOffer}},
+		{"EC2 Inst Offer ID", "Resolve", instOfferCommand, []string{instOffer}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -521,7 +618,8 @@ func Test_offerings(t *testing.T) {
 				zoneID, err = jsonparser.GetString(data, "id")
 				assert.NoError(t, err)
 				assert.NotEmpty(t, zoneID)
-				server.kv.Put("zoneID", []byte(zoneID))
+				_, err = server.kv.Put("zoneID", []byte(zoneID))
+				assert.NoError(t, err)
 			}
 
 			// Store Domain ID
@@ -529,7 +627,8 @@ func Test_offerings(t *testing.T) {
 				domainID, err = jsonparser.GetString(data, "id")
 				assert.NoError(t, err)
 				assert.NotEmpty(t, domainID)
-				server.kv.Put("domainID", []byte(domainID))
+				_, err = server.kv.Put("domainID", []byte(domainID))
+				assert.NoError(t, err)
 			}
 
 			// Store VPC Offer ID
@@ -537,7 +636,35 @@ func Test_offerings(t *testing.T) {
 				vpcOfferID, err = jsonparser.GetString(data, "id")
 				assert.NoError(t, err)
 				assert.NotEmpty(t, vpcOfferID)
-				server.kv.Put("vpcOfferID", []byte(vpcOfferID))
+				_, err = server.kv.Put("vpcOfferID", []byte(vpcOfferID))
+				assert.NoError(t, err)
+			}
+
+			// Store Net Offer ID
+			if d.command == netOfferCommand {
+				netOfferID, err = jsonparser.GetString(data, "id")
+				assert.NoError(t, err)
+				assert.NotEmpty(t, netOfferID)
+				_, err = server.kv.Put("netOfferID", []byte(netOfferID))
+				assert.NoError(t, err)
+			}
+
+			// Store OS Offer ID
+			if d.command == osOfferCommand {
+				osOfferID, err = jsonparser.GetString(data, "id")
+				assert.NoError(t, err)
+				assert.NotEmpty(t, osOfferID)
+				_, err = server.kv.Put("osOfferID", []byte(osOfferID))
+				assert.NoError(t, err)
+			}
+
+			// Store Inst Offer ID
+			if d.command == instOfferCommand {
+				instOfferID, err = jsonparser.GetString(data, "id")
+				assert.NoError(t, err)
+				assert.NotEmpty(t, instOfferID)
+				_, err = server.kv.Put("instOfferID", []byte(instOfferID))
+				assert.NoError(t, err)
 			}
 		})
 		time.Sleep(sleepTime * time.Millisecond)

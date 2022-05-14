@@ -33,14 +33,15 @@ const (
 	// Template
 	tmplName        = "My Ubuntu"
 	updTemplateName = "My Upd Ubuntu"
-	ostype          = "Ubuntu 21.04"
+	osOffer         = "Ubuntu 21.04"
 	tmplFilter      = "all"
 	tmplURL         = "http://dl.openvm.eu/cloudstack/macchinina/x86_64/macchinina-xen.vhd.bz2"
 
 	// Instance
 	instName    = "ubuntu-vm0"
 	updInstName = "upd-vm0"
+	diskSizeGB  = 1
 
-	instServiceOffer = "Small Instance"
-	instDiskOffer    = "Small"
+	instOffer     = "Small Instance"
+	instDiskOffer = "Small"
 )

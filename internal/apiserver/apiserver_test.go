@@ -13,6 +13,85 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_sess(t *testing.T) {
+	// os.Setenv("NATS_URL", "192.168.1.93:42377")
+	// os.Setenv("NATS_USER", "local")
+	// os.Setenv("NATS_PASS", "vsO2TcFwkmQ2p3eiOl3HcD7NVWEjvRI4")
+
+	port := rand.Intn(portEnd-portStart) + portStart
+
+	// Launch Server
+	server, err := MakeAPIServerMock()
+	assert.NoErrorf(t, err, "Failed to create a server")
+
+	go runServer(server.echo, port)
+
+	var zoneID, domainID, account string
+
+	account = "admin"
+
+	tmp, err := server.kv.Get("zoneID")
+	assert.NoError(t, err)
+
+	zoneID = string(tmp.Value())
+
+	tmp, err = server.kv.Get("domainID")
+	assert.NoError(t, err)
+
+	domainID = string(tmp.Value())
+
+	data := []struct {
+		name    string
+		action  string
+		command string
+		params  []string
+	}{
+		{"Session Create", "Create", sessCommand, []string{userID, zoneID, domainID, account}},
+		{"Session Read", "Read", sessCommand, []string{userID}},
+		{"Session Delete", "Delete", sessCommand, []string{userID}},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			var req api.CloudControlClient
+
+			client, err := api.NewClientWithResponses(getEndpoint(port))
+			assert.NoError(t, err)
+			assert.NotNil(t, client)
+
+			req.Client = *client
+			req.Action = d.action
+			req.Command = d.command
+			req.Params = d.params
+
+			res, err := req.MakeRequest()
+			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
+			assert.Equal(t, http.StatusCreated, res.StatusCode())
+			assert.NotEmpty(t, res.Body)
+
+			data, err := utils.DecodeJSONBytes(res.Body)
+			assert.NoError(t, err)
+
+			fmt.Println(string(data))
+
+			if req.Action == "Read" {
+
+				readZoneID, err := jsonparser.GetString(data, "location", "zone")
+				assert.NoError(t, err)
+				assert.Equal(t, zoneID, readZoneID)
+
+				readDomainID, err := jsonparser.GetString(data, "location", "domain")
+				assert.NoError(t, err)
+				assert.Equal(t, domainID, readDomainID)
+
+				readAccount, err := jsonparser.GetString(data, "location", "account")
+				assert.NoError(t, err)
+				assert.Equal(t, account, readAccount)
+			}
+		})
+		time.Sleep(sleepTime * time.Millisecond)
+	}
+}
+
 func Test_ssh(t *testing.T) {
 	port := rand.Intn(portEnd-portStart) + portStart
 
@@ -33,7 +112,6 @@ func Test_ssh(t *testing.T) {
 		command string
 		params  []string
 	}{
-		// SSH
 		{"EC2 SSH List", "List", sshCommand, []string{domainID, testAcc}},
 		{"EC2 SSH Create", "Create", sshCommand, []string{sshKeyName, domainID, testAcc, pubkey}},
 		{"EC2 SSH Read", "Read", sshCommand, []string{domainID, testAcc}},

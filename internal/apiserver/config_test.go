@@ -1,6 +1,7 @@
 package apiserver
 
 const (
+	userID    = "12eb8d3e-ea8a-4aa1-9226-5d3762aa668e"
 	portStart = 8085
 	portEnd   = 9085
 	sleepTime = 200

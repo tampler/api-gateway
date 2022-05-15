@@ -8,6 +8,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/utils"
+	"github.com/neurodyne-web-services/nws-sdk-go/services/ec2"
+	"github.com/neurodyne-web-services/nws-sdk-go/services/login"
 )
 
 const (
@@ -25,6 +27,7 @@ func availableServices() []string {
 
 	out = append(out, "S3")
 	out = append(out, "EC2")
+	out = append(out, "Login")
 
 	return out
 }
@@ -34,7 +37,8 @@ func availableResources() []string {
 	out := make([]string, 2, defaultSliceLen)
 
 	// out = append(out, s3.AvailableResources()...)
-	// out = append(out, ec2.AvailableResources()...)
+	out = append(out, ec2.AvailableResources()...)
+	out = append(out, login.AvailableResources()...)
 
 	return out
 }
@@ -50,9 +54,9 @@ func commandValidator(command interface{}) error {
 		return fmt.Errorf("invalid service name specified")
 	}
 
-	// if !utils.Contains(availableResources(), cmd[2]) {
-	// 	return fmt.Errorf("invalid resource name specified")
-	// }
+	if !utils.Contains(availableResources(), cmd[2]) {
+		return fmt.Errorf("invalid resource name specified")
+	}
 
 	return nil
 }

@@ -25,20 +25,17 @@ log_verbosity = "debug"
 metrics_name = "api_gateway"
 
 [ajc]
-task_timeout_min = 3
+concurrency = 4
+topic = "sdk::ec2"
 
 [ajc.ingress]
-concurrency = 4
 metrics_port = 8090
 name = "PING"
-topic = "sdk::ec2"
 
 [ajc.egress]
-concurrency = 4
 metrics_port = 8091
 name = "PONG"
-topic = "sdk::ec2"
 
 [sdk]
-job_time_sec = 120
+job_time_sec = 180
 kv_bucket_name = "ec2buck"

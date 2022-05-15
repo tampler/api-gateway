@@ -12,6 +12,7 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
+	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -46,7 +47,7 @@ func MakeAPIServerMock() (testServer, error) {
 	swagger.Servers = nil
 
 	// Connect to NATS
-	nc, err := MakeNatsConnect()
+	nc, err := natstool.MakeNatsConnect()
 	if err != nil {
 		log.Fatalf("NATS connect failed %s \n", err.Error())
 	}

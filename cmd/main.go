@@ -22,6 +22,7 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
@@ -47,7 +48,7 @@ func main() {
 	zl := logger.Sugar()
 
 	// Connect to NATS
-	nc, err := apiserver.MakeNatsConnect()
+	nc, err := natstool.MakeNatsConnect()
 	if err != nil {
 		log.Fatalf("NATS connect failed %s \n", err.Error())
 	}
@@ -223,5 +224,5 @@ func restricted(c echo.Context) error {
 // showDebugInfo - this prints envs to ease deployment and debug
 func showDebugInfo(zl *zap.Logger, cfg *config.AppConfig) {
 	zl.Info("NATS URL: ", zap.String("NATS_URL", os.Getenv("NATS_URL")))
-	zl.Info("Task timeout:", zap.Int("timeout, sec", cfg.Ajc.TaskTimeout))
+	zl.Info("Job timeout:", zap.Int("timeout, sec", cfg.Sdk.JobTime))
 }

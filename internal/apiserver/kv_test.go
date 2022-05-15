@@ -3,6 +3,7 @@ package apiserver
 import (
 	"testing"
 
+	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +15,7 @@ const (
 func Test_kv(t *testing.T) {
 
 	// Connect to NATS
-	nc, err := MakeNatsConnect()
+	nc, err := natstool.MakeNatsConnect()
 	assert.NoError(t, err)
 
 	js, err := nc.JetStream()

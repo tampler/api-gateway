@@ -35,9 +35,8 @@ type queueConfig struct {
 }
 
 type ajcConfig struct {
-	TaskTimeout int
-	Ingress     queueConfig
-	Egress      queueConfig
+	Ingress queueConfig
+	Egress  queueConfig
 }
 
 type logConfig struct {
@@ -92,19 +91,16 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 	cfg.Log.Verbosity = viper.GetString("debug.log_verbosity")
 	cfg.Log.Output = viper.GetString("debug.log_output")
 
-	// ajc
-	cfg.Ajc.TaskTimeout = viper.GetInt("ajc.task_timeout_min")
-
 	// Ping queue
 	cfg.Ajc.Ingress.Name = viper.GetString("ajc.ingress.name")
-	cfg.Ajc.Ingress.Topic = viper.GetString("ajc.ingress.topic")
-	cfg.Ajc.Ingress.Concurrency = viper.GetInt("ajc.ingress.concurrency")
+	cfg.Ajc.Ingress.Topic = viper.GetString("ajc.topic")
+	cfg.Ajc.Ingress.Concurrency = viper.GetInt("ajc.concurrency")
 	cfg.Ajc.Ingress.MetricsPort = viper.GetInt("ajc.ingress.metrics_port")
 
 	// Pong queue
 	cfg.Ajc.Egress.Name = viper.GetString("ajc.egress.name")
-	cfg.Ajc.Egress.Topic = viper.GetString("ajc.egress.topic")
-	cfg.Ajc.Egress.Concurrency = viper.GetInt("ajc.egress.concurrency")
+	cfg.Ajc.Egress.Topic = viper.GetString("ajc.topic")
+	cfg.Ajc.Egress.Concurrency = viper.GetInt("ajc.concurrency")
 	cfg.Ajc.Egress.MetricsPort = viper.GetInt("ajc.egress.metrics_port")
 
 	// SDK

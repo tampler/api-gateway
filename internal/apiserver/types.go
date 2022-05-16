@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	sessCommand      = "NWS::Login::Login"
+	sessCommand      = "NWS::Session::Login"
 	zoneCommand      = "NWS::EC2::Zone"
 	domCommand       = "NWS::EC2::Domain"
 	accCommand       = "NWS::EC2::Account"

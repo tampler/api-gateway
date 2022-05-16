@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/utils"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/ec2"
-	"github.com/neurodyne-web-services/nws-sdk-go/services/login"
+	"github.com/neurodyne-web-services/nws-sdk-go/services/session"
 )
 
 const (
@@ -27,7 +27,7 @@ func availableServices() []string {
 
 	out = append(out, "S3")
 	out = append(out, "EC2")
-	out = append(out, "Login")
+	out = append(out, "Session")
 
 	return out
 }
@@ -38,7 +38,7 @@ func availableResources() []string {
 
 	// out = append(out, s3.AvailableResources()...)
 	out = append(out, ec2.AvailableResources()...)
-	out = append(out, login.AvailableResources()...)
+	out = append(out, session.AvailableResources()...)
 
 	return out
 }

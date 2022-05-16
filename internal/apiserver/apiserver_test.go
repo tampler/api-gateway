@@ -40,13 +40,15 @@ func Test_sess(t *testing.T) {
 
 	domainID = string(tmp.Value())
 
+	now := time.Now().Format(timeFormat)
+
 	data := []struct {
 		name    string
 		action  string
 		command string
 		params  []string
 	}{
-		{"Session Create", "Create", sessCommand, []string{userID, zoneID, domainID, account}},
+		{"Session Create", "Create", sessCommand, []string{userID, testZone, zoneID, testDomain, domainID, account, now}},
 		{"Session Read", "Read", sessCommand, []string{userID}},
 		{"Session Delete", "Delete", sessCommand, []string{userID}},
 	}
@@ -75,15 +77,23 @@ func Test_sess(t *testing.T) {
 
 			if req.Action == "Read" {
 
-				readZoneID, err := jsonparser.GetString(data, "location", "zone")
+				readZone, err := jsonparser.GetString(data, "zone", "name")
+				assert.NoError(t, err)
+				assert.Equal(t, testZone, readZone)
+
+				readZoneID, err := jsonparser.GetString(data, "zone", "id")
 				assert.NoError(t, err)
 				assert.Equal(t, zoneID, readZoneID)
 
-				readDomainID, err := jsonparser.GetString(data, "location", "domain")
+				readDomain, err := jsonparser.GetString(data, "domain", "name")
+				assert.NoError(t, err)
+				assert.Equal(t, testDomain, readDomain)
+
+				readDomainID, err := jsonparser.GetString(data, "domain", "id")
 				assert.NoError(t, err)
 				assert.Equal(t, domainID, readDomainID)
 
-				readAccount, err := jsonparser.GetString(data, "location", "account")
+				readAccount, err := jsonparser.GetString(data, "account")
 				assert.NoError(t, err)
 				assert.Equal(t, account, readAccount)
 			}

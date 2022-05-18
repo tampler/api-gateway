@@ -25,6 +25,7 @@ const (
 	tmplCommand      = "NWS::EC2::Template"
 	instCommand      = "NWS::EC2::Instance"
 	instOfferCommand = "NWS::EC2::InstOffer"
+	aclCommand       = "NWS::EC2::ACL"
 )
 
 // MyContext - custom echo context

@@ -46,4 +46,8 @@ const (
 
 	instOffer     = "Small Instance"
 	instDiskOffer = "Small"
+
+	// ACL
+	aclName  = "my-acl"
+	aclDescr = "Description for my-acl"
 )

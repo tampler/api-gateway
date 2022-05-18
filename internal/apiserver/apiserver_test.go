@@ -758,3 +758,137 @@ func Test_offerings(t *testing.T) {
 		time.Sleep(sleepTime * time.Millisecond)
 	}
 }
+
+func Test_acl(t *testing.T) {
+	port := rand.Intn(portEnd-portStart) + portStart
+
+	// Launch Server
+	server, err := MakeAPIServerMock()
+	assert.NoErrorf(t, err, "Failed to create a server")
+
+	go runServer(server.echo, port)
+
+	var zoneID, domainID, vpcOfferID, vpcID, aclID string
+
+	tmp, err := server.kv.Get("zoneID")
+	assert.NoError(t, err)
+
+	zoneID = string(tmp.Value())
+
+	tmp, err = server.kv.Get("domainID")
+	assert.NoError(t, err)
+
+	domainID = string(tmp.Value())
+
+	tmp, err = server.kv.Get("vpcOfferID")
+	assert.NoError(t, err)
+
+	vpcOfferID = string(tmp.Value())
+
+	fmt.Println(vpcID)
+	fmt.Println(vpcOfferID)
+	fmt.Println(aclID)
+
+	data := []struct {
+		name    string
+		action  string
+		command string
+		params  []string
+	}{
+		{"EC2 VPC Create", "Create", vpcCommand, []string{vpcName, zoneID, domainID, testAcc, vpcOfferID, vpcCidr4, netDomain}},
+		{"EC2 VPC ID Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, testAcc, vpcName}},
+		{"EC2 ACL Create", "Create", aclCommand, []string{aclName, aclDescr}},
+		{"EC2 ACL	Resolve", "Resolve", aclCommand, []string{domainID, testAcc}},
+		{"EC2 ACL List", "List", aclCommand, []string{domainID, testAcc}},
+		{"EC2 ACL Read", "Read", aclCommand, []string{}},
+		{"EC2 ACL Delete", "Delete", aclCommand, []string{}},
+		{"EC2 ACL Nuke", "Nuke", aclCommand, []string{testAcc, domainID}},
+		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{testAcc, zoneID, domainID}},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			var req api.CloudControlClient
+
+			client, err := api.NewClientWithResponses(getEndpoint(port))
+			assert.NoError(t, err)
+			assert.NotNil(t, client)
+
+			req.Client = *client
+			req.Action = d.action
+			req.Command = d.command
+			req.Params = d.params
+
+			// Append RUN Time params, which are NOT available in compile time
+			if d.action == "Create" {
+				if d.command == aclCommand {
+					req.Params = append(req.Params, vpcID)
+				}
+			}
+
+			if d.action == "Resolve" {
+				if d.command == aclCommand {
+					req.Params = append(req.Params, vpcID, aclName)
+				}
+			}
+
+			if d.action == "List" || d.action == "Nuke" {
+				if d.command == aclCommand {
+					req.Params = append(req.Params, vpcID)
+				}
+			}
+
+			if d.action == "Read" || d.action == "Delete" {
+				if d.command == aclCommand {
+					req.Params = append(req.Params, aclID)
+				}
+			}
+
+			res, err := req.MakeRequest()
+			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
+			assert.Equal(t, http.StatusCreated, res.StatusCode())
+			assert.NotEmpty(t, res.Body)
+
+			data, err := utils.DecodeJSONBytes(res.Body)
+			assert.NoError(t, err)
+
+			if d.action == "Resolve" {
+
+				// if d.command == osOfferCommand {
+				// 	osOfferID, err = jsonparser.GetString(data, "id")
+				// 	assert.NoError(t, err)
+				// }
+
+				if d.command == vpcCommand {
+
+					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+
+						if string(value) != jsonparser.Null.String() {
+							vpcID, err = jsonparser.GetString(value, "id", "id")
+							assert.NoError(t, err)
+						}
+
+						assert.NoError(t, err)
+					}, "items")
+
+					assert.NoError(t, err)
+				}
+
+				if d.command == aclCommand {
+
+					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+
+						if string(value) != jsonparser.Null.String() {
+							aclID, err = jsonparser.GetString(value, "id", "id")
+							assert.NoError(t, err)
+						}
+
+						assert.NoError(t, err)
+					}, "items")
+
+					assert.NoError(t, err)
+				}
+			}
+		})
+		time.Sleep(sleepTime * time.Millisecond)
+	}
+}

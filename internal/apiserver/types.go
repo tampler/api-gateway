@@ -28,6 +28,9 @@ const (
 	aclCommand       = "NWS::EC2::ACL"
 )
 
+// SubMap - event subscriber map
+type SubMap = map[uuid.UUID]Subscriber
+
 // MyContext - custom echo context
 type MyContext struct {
 	echo.Context

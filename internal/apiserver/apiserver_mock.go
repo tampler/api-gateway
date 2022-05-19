@@ -13,7 +13,6 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
-	uuid "github.com/satori/go.uuid"
 )
 
 const (
@@ -87,7 +86,10 @@ func MakeAPIServerMock() (testServer, error) {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
-	pub := MakePublisher(pongMgr, zl, map[uuid.UUID]Subscriber{})
+	pub := MakePublisher(pongMgr, zl, SubMap{})
+	if pub.sub == nil {
+		zl.Fatal()
+	}
 
 	pub.AddHandlers(cfg.Ajc.Egress.Topic)
 

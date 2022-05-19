@@ -35,6 +35,7 @@ type queueConfig struct {
 }
 
 type ajcConfig struct {
+	Timeout int
 	Ingress queueConfig
 	Egress  queueConfig
 }
@@ -105,6 +106,7 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 
 	// SDK
 	cfg.Sdk.JobTime = viper.GetInt("sdk.job_time_sec")
+	cfg.Ajc.Timeout = viper.GetInt("ajc.task_deadline_min")
 	cfg.Sdk.Bucket = viper.GetString("sdk.kv_bucket_name")
 
 	return nil

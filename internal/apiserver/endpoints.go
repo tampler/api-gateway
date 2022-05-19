@@ -71,7 +71,9 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		},
 	}
 
-	task, err := aj.NewTask(cc.cfg.Ajc.Ingress.Topic, cmd, aj.TaskDeadline(time.Now().Add(time.Hour)))
+	runtime := time.Duration(cc.cfg.Ajc.Timeout) * time.Minute
+
+	task, err := aj.NewTask(cc.cfg.Ajc.Ingress.Topic, cmd, aj.TaskDeadline(time.Now().Add(runtime)))
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to create a task: %v", err))
 	}

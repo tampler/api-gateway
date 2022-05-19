@@ -26,6 +26,7 @@ metrics_name = "api_gateway"
 
 [ajc]
 concurrency = 4
+task_deadline_min = 10
 topic = "sdk::ec2"
 
 [ajc.ingress]

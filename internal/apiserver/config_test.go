@@ -50,4 +50,13 @@ const (
 	// ACL
 	aclName  = "my-acl"
 	aclDescr = "Description for my-acl"
+
+	// ACL Rule
+	aclrDesc      = "Allow dummy subnet"
+	aclrAction    = "allow"
+	aclrProto     = "tcp"
+	aclrTraffic   = "ingress"
+	aclrCIDR4     = "10.100.1.0/24,10.100.2.0/24"
+	aclrPortStart = 9991
+	aclrPortEnd   = 9995
 )

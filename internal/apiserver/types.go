@@ -26,6 +26,7 @@ const (
 	instCommand      = "NWS::EC2::Instance"
 	instOfferCommand = "NWS::EC2::InstOffer"
 	aclCommand       = "NWS::EC2::ACL"
+	aclrCommand      = "NWS::EC2::ACLRule"
 )
 
 // SubMap - event subscriber map

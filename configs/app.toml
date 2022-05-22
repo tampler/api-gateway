@@ -25,7 +25,7 @@ log_verbosity = "debug"
 metrics_name = "api_gateway"
 
 [ajc]
-concurrency = 4
+concurrency = 8
 task_deadline_min = 10
 topic = "sdk::ec2"
 
@@ -38,5 +38,5 @@ metrics_port = 8091
 name = "PONG"
 
 [sdk]
-job_time_sec = 180
+job_time_sec = 240
 kv_bucket_name = "ec2buck"

@@ -41,13 +41,10 @@ func Test_ssh(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			var req api.CloudControlClient
 
-			client, err := api.NewClientWithResponses(getEndpoint(port))
+			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
 
-			req.Client = *client
 			req.Action = d.action
 			req.Command = d.command
 			req.Params = d.params
@@ -81,13 +78,9 @@ func TestDS_domain(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			var req api.CloudControlClient
-
-			client, err := api.NewClientWithResponses(getEndpoint(port))
+			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
 
-			req.Client = *client
 			req.Action = d.action
 			req.Command = d.command
 			req.Params = d.params
@@ -143,13 +136,10 @@ func Test_vpc(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			var req api.CloudControlClient
 
-			client, err := api.NewClientWithResponses(getEndpoint(port))
+			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
 
-			req.Client = *client
 			req.Action = d.action
 			req.Command = d.command
 			req.Params = d.params
@@ -228,13 +218,10 @@ func Test_net(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			var req api.CloudControlClient
 
-			client, err := api.NewClientWithResponses(getEndpoint(port))
+			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
 
-			req.Client = *client
 			req.Action = d.action
 			req.Command = d.command
 			req.Params = d.params
@@ -324,13 +311,10 @@ func Test_tmpl(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			var req api.CloudControlClient
 
-			client, err := api.NewClientWithResponses(getEndpoint(port))
+			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
 
-			req.Client = *client
 			req.Action = d.action
 			req.Command = d.command
 			req.Params = d.params
@@ -455,13 +439,10 @@ func Test_inst(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			var req api.CloudControlClient
 
-			client, err := api.NewClientWithResponses(getEndpoint(port))
+			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
 
-			req.Client = *client
 			req.Action = d.action
 			req.Command = d.command
 			req.Params = d.params
@@ -593,13 +574,10 @@ func Test_offerings(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			var req api.CloudControlClient
 
-			client, err := api.NewClientWithResponses(getEndpoint(port))
+			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
 
-			req.Client = *client
 			req.Action = d.action
 			req.Command = d.command
 			req.Params = d.params
@@ -718,13 +696,10 @@ func Test_acl(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			var req api.CloudControlClient
 
-			client, err := api.NewClientWithResponses(getEndpoint(port))
+			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
 
-			req.Client = *client
 			req.Action = d.action
 			req.Command = d.command
 			req.Params = d.params
@@ -860,13 +835,10 @@ func Test_aclrule(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			var req api.CloudControlClient
 
-			client, err := api.NewClientWithResponses(getEndpoint(port))
+			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
-			assert.NotNil(t, client)
 
-			req.Client = *client
 			req.Action = d.action
 			req.Command = d.command
 			req.Params = d.params

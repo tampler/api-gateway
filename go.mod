@@ -6,14 +6,14 @@ require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/casdoor/casdoor-go-sdk v0.4.0
 	github.com/choria-io/asyncjobs v0.0.8-0.20220505123555-1d9f6ef7e6fb
-	github.com/deepmap/oapi-codegen v1.10.1
+	github.com/deepmap/oapi-codegen v1.11.0
 	github.com/getkin/kin-openapi v0.94.0
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/labstack/echo-contrib v0.12.0
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/nats-io/nats.go v1.15.0
-	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220520140813-85a0ab06aea1
+	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220522183725-91e6c1620312
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1
@@ -73,13 +73,13 @@ require (
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
-	golang.org/x/sys v0.0.0-20220519141025-dcacdad47464 // indirect
+	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99 // indirect
+	gopkg.in/yaml.v3 v3.0.0 // indirect
 )
 
-replace github.com/neurodyne-web-services/nws-sdk-go => /home/bku/work/go/src/github.com/neurodyne-web-services/nws-sdk-go
+// replace github.com/neurodyne-web-services/nws-sdk-go => /home/bku/work/go/src/github.com/neurodyne-web-services/nws-sdk-go

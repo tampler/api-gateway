@@ -45,9 +45,9 @@ func Test_ssh(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			res, err := req.MakeRequest()
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
@@ -81,9 +81,9 @@ func TestDS_domain(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			res, err := req.MakeRequest()
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
@@ -140,12 +140,12 @@ func Test_vpc(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			if d.action == "Read" || d.action == "Delete" {
-				req.Params = append(req.Params, vpcID)
+				req.Cmd.Params = append(req.Cmd.Params, vpcID)
 			}
 
 			res, err := req.MakeRequest()
@@ -222,17 +222,17 @@ func Test_net(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			// Append RUN Time params, which are NOT available in compile time
 			if d.action == "Read" || d.action == "Delete" {
-				req.Params = append(req.Params, netID)
+				req.Cmd.Params = append(req.Cmd.Params, netID)
 			}
 
 			if d.action == "Create" {
-				req.Params = append(req.Params, vpcID)
+				req.Cmd.Params = append(req.Cmd.Params, vpcID)
 			}
 
 			res, err := req.MakeRequest()
@@ -315,21 +315,21 @@ func Test_tmpl(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			// Append RUN Time params, which are NOT available in compile time
 			if d.action == "Create" {
-				req.Params = append(req.Params, osOfferID, tmplURL)
+				req.Cmd.Params = append(req.Cmd.Params, osOfferID, tmplURL)
 			}
 
 			if d.action == "Read" {
-				req.Params = append(req.Params, tmplID, tmplFilter)
+				req.Cmd.Params = append(req.Cmd.Params, tmplID, tmplFilter)
 			}
 
 			if d.action == "Delete" {
-				req.Params = append(req.Params, tmplID, zoneID)
+				req.Cmd.Params = append(req.Cmd.Params, tmplID, zoneID)
 			}
 
 			res, err := req.MakeRequest()
@@ -443,43 +443,43 @@ func Test_inst(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			// Append RUN Time params, which are NOT available in compile time
 			if d.action == "Create" {
 
 				if d.command == netCommand {
-					req.Params = append(req.Params, vpcID)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID)
 				}
 
 				if d.command == tmplCommand {
-					req.Params = append(req.Params, osOfferID, tmplURL)
+					req.Cmd.Params = append(req.Cmd.Params, osOfferID, tmplURL)
 				}
 
 				if d.command == instCommand {
-					req.Params = append(req.Params, tmplID, instOfferID, sshKeyName, fmt.Sprint(diskSizeGB), fmt.Sprintf("net::%s", netID))
+					req.Cmd.Params = append(req.Cmd.Params, tmplID, instOfferID, sshKeyName, fmt.Sprint(diskSizeGB), fmt.Sprintf("net::%s", netID))
 				}
 			}
 
 			if d.action == "Resolve" {
 				if d.command == instCommand {
-					req.Params = append(req.Params, tmplID, instName)
+					req.Cmd.Params = append(req.Cmd.Params, tmplID, instName)
 				}
 			}
 
 			if d.action == "Read" {
 				if d.command == tmplCommand {
-					req.Params = append(req.Params, tmplID, tmplFilter)
+					req.Cmd.Params = append(req.Cmd.Params, tmplID, tmplFilter)
 				}
 				if d.command == instCommand {
-					req.Params = append(req.Params, instID)
+					req.Cmd.Params = append(req.Cmd.Params, instID)
 				}
 			}
 
 			if d.action == "Delete" {
-				req.Params = append(req.Params, instID)
+				req.Cmd.Params = append(req.Cmd.Params, instID)
 			}
 
 			res, err := req.MakeRequest()
@@ -578,9 +578,9 @@ func Test_offerings(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			res, err := req.MakeRequest()
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
@@ -700,32 +700,32 @@ func Test_acl(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			// Append RUN Time params, which are NOT available in compile time
 			if d.action == "Create" {
 				if d.command == aclCommand {
-					req.Params = append(req.Params, vpcID)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID)
 				}
 			}
 
 			if d.action == "Resolve" {
 				if d.command == aclCommand {
-					req.Params = append(req.Params, vpcID, aclName)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID, aclName)
 				}
 			}
 
 			if d.action == "List" || d.action == "Nuke" {
 				if d.command == aclCommand {
-					req.Params = append(req.Params, vpcID)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID)
 				}
 			}
 
 			if d.action == "Read" || d.action == "Delete" {
 				if d.command == aclCommand {
-					req.Params = append(req.Params, aclID)
+					req.Cmd.Params = append(req.Cmd.Params, aclID)
 				}
 			}
 
@@ -839,45 +839,45 @@ func Test_aclrule(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			// Append RUN Time params, which are NOT available in compile time
 			if d.action == "Create" {
 
 				if d.command == netCommand {
-					req.Params = append(req.Params, vpcID)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID)
 				}
 
 				if d.command == aclCommand {
-					req.Params = append(req.Params, vpcID)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID)
 				}
 
 				if d.command == aclrCommand {
-					req.Params = append(req.Params, aclID, netID)
+					req.Cmd.Params = append(req.Cmd.Params, aclID, netID)
 				}
 			}
 
 			if d.action == "Resolve" {
 				if d.command == aclCommand {
-					req.Params = append(req.Params, vpcID, aclName)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID, aclName)
 				}
 			}
 
 			if d.action == "List" || d.action == "Nuke" {
 				if d.command == aclCommand {
-					req.Params = append(req.Params, vpcID)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID)
 				}
 
 				if d.command == aclrCommand {
-					req.Params = append(req.Params, aclID)
+					req.Cmd.Params = append(req.Cmd.Params, aclID)
 				}
 			}
 
 			if d.action == "Read" || d.action == "Delete" {
 				if d.command == aclCommand {
-					req.Params = append(req.Params, aclID)
+					req.Cmd.Params = append(req.Cmd.Params, aclID)
 				}
 			}
 

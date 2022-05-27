@@ -59,9 +59,9 @@ func Test_sess(t *testing.T) {
 			req, err := api.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
-			req.Action = d.action
-			req.Command = d.command
-			req.Params = d.params
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
 
 			res, err := req.MakeRequest()
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
@@ -73,7 +73,7 @@ func Test_sess(t *testing.T) {
 
 			fmt.Println(string(data))
 
-			if req.Action == "Read" {
+			if req.Cmd.Action == "Read" {
 
 				readZone, err := jsonparser.GetString(data, "zone", "name")
 				assert.NoError(t, err)

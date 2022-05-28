@@ -60,6 +60,11 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	resourceName := msg[2]
 	action := string(req.Mandatory.Action)
 
+	// Save User ID from JWT for the Session Login event
+	if serviceName == "Session" && resourceName == "Login" {
+		params = append(params, cc.info.ID)
+	}
+
 	// Extract API command
 	cmd := APIRequest{
 		JobID: requestID,

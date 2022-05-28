@@ -23,6 +23,7 @@ const (
 func MakeAPIServerMock() (testServer, error) {
 
 	var serv testServer
+	var info UserInfo
 
 	// Build a global config
 	var cfg config.AppConfig
@@ -96,7 +97,7 @@ func MakeAPIServerMock() (testServer, error) {
 	// Add custom context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := MakeMyContext(c, cfg, &pub, zl)
+			cc := MakeMyContext(c, cfg, &pub, zl, info)
 			return next(cc)
 		}
 	})

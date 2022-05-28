@@ -32,18 +32,24 @@ const (
 // SubMap - event subscriber map
 type SubMap = map[uuid.UUID]Subscriber
 
+// user info from JWT
+type UserInfo struct {
+	ID string
+}
+
 // MyContext - custom echo context
 type MyContext struct {
 	echo.Context
-	cfg config.AppConfig
-	pub *Publisher
-	zl  *zap.SugaredLogger
+	cfg  config.AppConfig
+	pub  *Publisher
+	zl   *zap.SugaredLogger
+	info UserInfo
 }
 
 // MakeMyContext - factory to create a context
-func MakeMyContext(c echo.Context, cfg config.AppConfig, pub *Publisher, zl *zap.SugaredLogger) *MyContext {
+func MakeMyContext(c echo.Context, cfg config.AppConfig, pub *Publisher, zl *zap.SugaredLogger, info UserInfo) *MyContext {
 	return &MyContext{
-		c, cfg, pub, zl,
+		c, cfg, pub, zl, info,
 	}
 }
 

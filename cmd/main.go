@@ -37,6 +37,7 @@ func main() {
 
 	// Build a global config
 	var cfg config.AppConfig
+	var info apiserver.UserInfo
 
 	if err := cfg.AppInit(CONFIG_NAME, CONFIG_PATH); err != nil {
 		log.Fatalf("Config failed %s", err.Error())
@@ -107,7 +108,7 @@ func main() {
 	// Add custom context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := apiserver.MakeMyContext(c, cfg, &pub, zl)
+			cc := apiserver.MakeMyContext(c, cfg, &pub, zl, info)
 			return next(cc)
 		}
 	})
@@ -143,6 +144,8 @@ func main() {
 					if err != nil {
 						return nil, errors.New("failed to parse token")
 					}
+
+					info.ID = claims.Subject
 
 					return claims.AccessToken, nil
 				},

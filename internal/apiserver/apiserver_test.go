@@ -49,7 +49,7 @@ func Test_sess(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"Session Create", "Create", sessCommand, []string{userID, testZone, zoneID, testDomain, domainID, account, netDomain, now}},
+		{"Session Create", "Create", sessCommand, []string{testZone, zoneID, testDomain, domainID, account, netDomain, now, userID}},
 		{"Session Read", "Read", sessCommand, []string{userID}},
 		{"Session Delete", "Delete", sessCommand, []string{userID}},
 	}

@@ -12,6 +12,10 @@ import (
 )
 
 const (
+	// dummy user ID for testing
+	userID = "12eb8d3e-ea8a-4aa1-9226-5d3762aa668e"
+
+	// Cloud Control Commands
 	sessCommand      = "NWS::Session::Login"
 	zoneCommand      = "NWS::EC2::Zone"
 	domCommand       = "NWS::EC2::Domain"

@@ -25,6 +25,8 @@ func MakeAPIServerMock() (testServer, error) {
 	var serv testServer
 	var info UserInfo
 
+	info.ID = userID
+
 	// Build a global config
 	var cfg config.AppConfig
 

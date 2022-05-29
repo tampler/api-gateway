@@ -97,8 +97,11 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		cc.zl.Errorf("FAIL: request timed out %v", req)
 
 	case <-done:
-		cc.zl.Debugf("Success: response: %v", string(observ.data))
-
+		if len(observ.err) > 0 {
+			cc.zl.Debugf("Fail: error: %v", string(observ.err))
+		} else {
+			cc.zl.Debugf("Success: response: %v", string(observ.data))
+		}
 	}
 
 	if observ.err != "" {

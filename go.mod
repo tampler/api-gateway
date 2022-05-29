@@ -13,7 +13,7 @@ require (
 	github.com/labstack/echo-contrib v0.12.0
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/nats-io/nats.go v1.16.0
-	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220527153008-a4ff3d3a7be6
+	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220529114918-3f6bf6a75139
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.7.1
@@ -77,9 +77,9 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
-	gopkg.in/ini.v1 v1.66.4 // indirect
+	gopkg.in/ini.v1 v1.66.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-// replace github.com/neurodyne-web-services/nws-sdk-go => /home/bku/work/go/src/github.com/neurodyne-web-services/nws-sdk-go
+replace github.com/neurodyne-web-services/nws-sdk-go => /home/bku/work/go/src/github.com/neurodyne-web-services/nws-sdk-go

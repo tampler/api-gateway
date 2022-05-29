@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	delimiter              = "::"
-	defaultSliceLen        = 4
-	defaultCommandCapacity = 8
+	delimiter       = "::"
+	defaultSliceLen = 8
 )
 
 type CustomValidator struct {
@@ -23,9 +22,8 @@ type CustomValidator struct {
 }
 
 func availableServices() []string {
-	out := make([]string, 2, defaultCommandCapacity)
+	out := make([]string, defaultSliceLen)
 
-	out = append(out, "S3")
 	out = append(out, "EC2")
 	out = append(out, "Session")
 
@@ -34,11 +32,11 @@ func availableServices() []string {
 
 // availableResources - list resources from all available services
 func availableResources() []string {
-	out := make([]string, 2, defaultSliceLen)
+	out := make([]string, 2, 32)
 
 	// out = append(out, s3.AvailableResources()...)
-	out = append(out, ec2.AvailableResources()...)
-	out = append(out, session.AvailableResources()...)
+	out = append(out, ec2.AllResources...)
+	out = append(out, session.AllResources...)
 
 	return out
 }

@@ -348,17 +348,7 @@ func Test_tmpl(t *testing.T) {
 				}
 
 				if d.command == tmplCommand {
-
-					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-
-						if string(value) != jsonparser.Null.String() {
-							tmplID, err = jsonparser.GetString(value, "id", "id")
-							assert.NoError(t, err)
-						}
-
-						assert.NoError(t, err)
-					}, "items")
-
+					tmplID, err = jsonparser.GetString(data, "id", "id")
 					assert.NoError(t, err)
 				}
 			}
@@ -429,7 +419,7 @@ func Test_inst(t *testing.T) {
 		{"EC2 Tmpl Create", "Create", tmplCommand, []string{tmplName, zoneID, domainID, testAcc}},
 		{"EC2 Tmpl Resolve", "Resolve", tmplCommand, []string{zoneID, domainID, testAcc, tmplFilter, tmplName}},
 		{"EC2 Inst Create", "Create", instCommand, []string{instName, zoneID, domainID, testAcc}},
-		{"EC2 Inst Resolve", "Resolve", instCommand, []string{zoneID, domainID, testAcc}},
+		{"EC2 Inst Resolve", "Resolve", instCommand, []string{zoneID, domainID, testAcc, instName}},
 		{"EC2 Inst Read", "Read", instCommand, []string{}},
 		{"EC2 Inst Delete", "Delete", instCommand, []string{}},
 		{"EC2 Inst Nuke", "Nuke", instCommand, []string{testAcc, zoneID, domainID}},
@@ -514,17 +504,7 @@ func Test_inst(t *testing.T) {
 
 				// Resolve Templ ID
 				if d.command == tmplCommand {
-
-					_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-
-						if string(value) != jsonparser.Null.String() {
-							tmplID, err = jsonparser.GetString(value, "id", "id")
-							assert.NoError(t, err)
-						}
-
-						assert.NoError(t, err)
-					}, "items")
-
+					tmplID, err = jsonparser.GetString(data, "id", "id")
 					assert.NoError(t, err)
 				}
 

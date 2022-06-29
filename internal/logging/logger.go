@@ -27,7 +27,7 @@ func MakeLogger(verbosity, encoding string) (*zap.Logger, error) {
 			MessageKey: "message",
 
 			LevelKey:    "level",
-			EncodeLevel: zapcore.CapitalLevelEncoder,
+			EncodeLevel: zapcore.CapitalColorLevelEncoder,
 
 			TimeKey:    "time",
 			EncodeTime: zapcore.RFC3339TimeEncoder,

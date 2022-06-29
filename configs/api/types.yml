@@ -1,8 +1,7 @@
 # Where to store the output
-output: internal/cloudcontrol/api/cc-server.go
+output: internal/apiserver/api/cc-types.go
 # Go package name
 package: api
 # Entities to generate
 generate:
-  - server
-  - spec
+  models: true

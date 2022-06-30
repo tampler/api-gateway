@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
   title: NWS Cloud Control API
-  description: Cloud Control API
-  version: v0.0.2
+  description: OAPI for Cloud Control
+  version: v0.0.1
 servers:
-  - url: http://localhost:8084/v1
+  - url: http://localhost:8083
 paths:
   /metrics:
     get:
@@ -28,18 +28,18 @@ paths:
     post:
       tags:
         - main
-      summary: Cloud Control List Action
+      summary: Cloud Control Request
       requestBody:
-        description: CC List body
+        description: CC request body
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Request"
+              $ref: "#/components/schemas/Req"
 
       responses:
         "201":
-          description: CC List - valid response
+          description: CC valid response
           content:
             application/json:
               schema:
@@ -58,7 +58,7 @@ components:
             $ref: "#/components/schemas/Error"
 
   schemas:
-    Request:
+    Req:
       type: object
       properties:
         Mandatory:
@@ -71,6 +71,7 @@ components:
     Mandatory:
       type: object
       properties:
+        # Cloud Control Action - CRUDLNR
         Action:
           type: string
           enum:
@@ -83,30 +84,24 @@ components:
             - Resolve
           x-oapi-codegen-extra-tags:
             validate: required
+        # Cloud Control Command - format NWS::EC2::<Command>
         Command:
           type: string
           x-oapi-codegen-extra-tags:
             validate: required
-      required:
-        - Action
-        - Command
-
-    Options:
-      type: object
-      properties:
-        # Enabled zones
-        Zone:
-          type: string
-          enum:
-            - default
-            - ru-msk-0
-
         # Method parameters
         Params:
           type: array
           items:
             type: string
+      required:
+        - Action
+        - Command
+        - Params
 
+    Options:
+      type: object
+      properties:
         # Exclude from action, e.g don't Nuke
         Exclude:
           type: array
@@ -129,17 +124,17 @@ components:
     Success:
       type: object
       properties:
-        Service:
+        jobid:
           type: string
-        Api:
+        err:
           type: string
-        Data:
+        data:
           type: string
           format: byte
       required:
-        - Service
-        - Api
-        - Data
+        - jobid
+        - err
+        - data
     Metrics:
       type: array
       items:

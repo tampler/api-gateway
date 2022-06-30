@@ -14,6 +14,10 @@ import (
 )
 
 func Test_ssh(t *testing.T) {
+	// os.Setenv("TF_ACC", "1")
+	// os.Setenv("NATS_URL", "192.168.1.93:37487")
+	// os.Setenv("NATS_USER", "local")
+	// os.Setenv("NATS_PASS", "")
 	port := rand.Intn(portEnd-portStart) + portStart
 
 	// Launch Server
@@ -51,6 +55,7 @@ func Test_ssh(t *testing.T) {
 
 			res, err := req.MakeRequest()
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
+
 			assert.Equal(t, http.StatusCreated, res.StatusCode())
 			assert.NotEmpty(t, res.Body)
 		})

@@ -4,7 +4,7 @@ APIDIR=./api
 CFGDIR=./configs/api
 
 API_LIST="\
-server.yml,api.yml \
-client.yml,api.yml \
-types.yml,api.yml \
+server.yml,cc.yml \
+client.yml,cc.yml \
+types.yml,cc.yml \
 "

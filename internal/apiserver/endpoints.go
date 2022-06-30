@@ -36,7 +36,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	defer cc.pub.RemoveObserver(requestID)
 
 	// Extract API request from REST
-	var req api.Request
+	var req api.CCReq
 
 	err := ctx.Bind(&req)
 	if err != nil {
@@ -48,17 +48,12 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		return sendAPIError(ctx, http.StatusInternalServerError, err.Error())
 	}
 
-	var params []string
-
-	if req.Options.Params != nil {
-		params = *req.Options.Params
-	}
+	params := req.Mandatory.Params
 
 	// Parse input command
 	msg := strings.Split(req.Mandatory.Command, delimiter)
 	serviceName := msg[1]
 	resourceName := msg[2]
-	action := string(req.Mandatory.Action)
 
 	// Save User ID from JWT for the Session Login event
 	if serviceName == "Session" && resourceName == "Login" {
@@ -71,7 +66,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 		Cmd: APICommand{
 			Service:  serviceName,
 			Resource: resourceName,
-			Action:   action,
+			Action:   string(req.Mandatory.Action),
 			Params:   params,
 		},
 	}
@@ -128,8 +123,6 @@ func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, "Failed to serialize Runner Response")
 	}
-
-	// ctx.zl.Debugf("Sending buf: %v", string(buf))
 
 	// Now, we have to return the Runner response
 	err = ctx.JSONBlob(http.StatusCreated, buf)

@@ -13,10 +13,10 @@ require (
 	github.com/labstack/echo-contrib v0.12.0
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/nats-io/nats.go v1.16.0
-	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220629101922-4c71bc947616
+	github.com/neurodyne-web-services/nws-sdk-go v0.0.0-20220630131354-47232338aed3
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/viper v1.12.0
-	github.com/stretchr/testify v1.7.5
+	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.21.0
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858
 )

@@ -1,96 +1,77 @@
-package restserver
+package worker
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/google/uuid"
-	"github.com/neurodyne-web-services/api-gateway/internal/worker"
+	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	"go.uber.org/zap"
 )
 
-// BusEvent - bus event structure
-type BusEvent struct {
-	data []byte
-	err  string
-}
-
-// Subscriber - bus subscriber
-type Subscriber interface {
-	Notify(BusEvent)
-}
-
-// Publisher - bus publisher
-type Publisher struct {
-	mutex sync.RWMutex
-	sub   SubMap
-	pong  worker.QueueManager
-	zl    *zap.SugaredLogger
-}
-
-// MakePublisher - factory for Publisher
-func MakePublisher(m worker.QueueManager, zl *zap.SugaredLogger, sm SubMap) Publisher {
-	return Publisher{pong: m, zl: zl, sub: sm}
-}
-
 // AddHandlers - add AJC queue handlers for a given topic
 func (p *Publisher) AddHandlers(topic string) error {
 
-	err := p.pong.Router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
+	err := p.Pong.Router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
 
-		var resp APIResponse
+		var resp cc.APIResponse
 
 		if err := json.Unmarshal(t.Payload, &resp); err != nil {
-			p.zl.Error(err)
+			p.Zl.Error(err)
 			return nil, err
 		}
 
-		return nil, p.NotifyObserver(resp.JobID, BusEvent{data: resp.Data, err: resp.Err})
+		id, err := uuid.FromBytes(resp.JobID)
+		if err != nil {
+			p.Zl.Error(err)
+			return nil, err
+		}
+
+		return nil, p.NotifyObserver(id, BusEvent{Data: resp.Data, Err: resp.Err})
 	})
 
 	if err != nil {
-		p.zl.Error(err)
+		p.Zl.Error(err)
 		return fail.Error500(fmt.Sprintf("PONG Handler: %v", err.Error()))
 	}
 
 	// Execute PONG queue
-	go p.pong.Run(context.Background())
+	go p.Pong.Run(context.Background())
 
 	return nil
 }
 
 func (p *Publisher) AddObserver(id uuid.UUID, sub Subscriber) {
 	// p.zl.Debugf("Adding observer: %s", id)
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-	p.sub[id] = sub
+	p.Mutex.Lock()
+	defer p.Mutex.Unlock()
+	p.Sub[id] = sub
 }
 
 func (p *Publisher) RemoveObserver(id uuid.UUID) {
 	// p.zl.Debugf("Removing observer: %s", id)
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.Mutex.Lock()
+	defer p.Mutex.Unlock()
 
-	delete(p.sub, id)
+	delete(p.Sub, id)
 }
 
 func (p *Publisher) NotifyObserver(id uuid.UUID, e BusEvent) error {
 	// p.zl.Debugf("Notifying observer: %s", id)
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+	p.Mutex.Lock()
+	defer p.Mutex.Unlock()
 
 	// Safe access to map
-	if _, ok := p.sub[id]; !ok {
+	if _, ok := p.Sub[id]; !ok {
 		msg := fmt.Sprintf("Observer %s not found", id)
-		p.zl.Error(msg)
+		p.Zl.Error(msg)
 		return fail.Error500(msg)
 	}
 
-	p.sub[id].Notify(e)
+	p.Sub[id].Notify(e)
 	return nil
 }
 
@@ -98,27 +79,27 @@ func (p *Publisher) NotifyObserver(id uuid.UUID, e BusEvent) error {
 type BusObserver struct {
 	zl   *zap.SugaredLogger
 	id   uuid.UUID
-	data []byte
-	err  string
-	done chan bool
+	Data []byte
+	Err  string
+	Done chan bool
 }
 
 // MakeBusObserver - factory for Bus observer
 func MakeBusObserver(id uuid.UUID, zl *zap.SugaredLogger, done chan bool) BusObserver {
-	return BusObserver{id: id, zl: zl, done: done}
+	return BusObserver{id: id, zl: zl, Done: done}
 }
 
 // Notify - notification with unblocking for listeners
 func (bo *BusObserver) Notify(ev BusEvent) {
-	bo.err = ev.err
+	bo.Err = ev.Err
 
 	// pass an empty buffer to avoid exceptions for empty buffer response from SDK
-	if ev.data != nil {
-		bo.data = ev.data
+	if ev.Data != nil {
+		bo.Data = ev.Data
 	} else {
-		ev.data = []byte{}
+		ev.Data = []byte{}
 	}
 
 	// Confirm process finish
-	bo.done <- true
+	bo.Done <- true
 }

@@ -2,11 +2,16 @@ package worker
 
 import (
 	"context"
+	"sync"
 
 	aj "github.com/choria-io/asyncjobs"
+	"github.com/google/uuid"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"go.uber.org/zap"
 )
+
+// SubMap - event subscriber map
+type SubMap = map[uuid.UUID]Subscriber
 
 // QueueManager - an async queue job manager
 type QueueManager struct {
@@ -41,4 +46,28 @@ func MakeAPIServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong QueueMa
 		Pong: pong,
 	}
 	return &srv
+}
+
+// Publisher - bus publisher
+type Publisher struct {
+	Mutex sync.RWMutex
+	Sub   SubMap
+	Pong  QueueManager
+	Zl    *zap.SugaredLogger
+}
+
+// MakePublisher - factory for Publisher
+func MakePublisher(m QueueManager, zl *zap.SugaredLogger, sm SubMap) Publisher {
+	return Publisher{Pong: m, Zl: zl, Sub: sm}
+}
+
+// BusEvent - bus event structure
+type BusEvent struct {
+	Data []byte
+	Err  string
+}
+
+// Subscriber - bus subscriber
+type Subscriber interface {
+	Notify(BusEvent)
 }

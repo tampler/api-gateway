@@ -12,7 +12,6 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/api-gateway/internal/protoserver"
-	apiserver "github.com/neurodyne-web-services/api-gateway/internal/restserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
 	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"
@@ -81,7 +80,7 @@ func main() {
 	// Create an instance of our handler which satisfies the generated interface
 	_ = worker.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
 
-	pub := apiserver.MakePublisher(pongMgr, zl, map[uuid.UUID]apiserver.Subscriber{})
+	pub := worker.MakePublisher(pongMgr, zl, map[uuid.UUID]worker.Subscriber{})
 	pub.AddHandlers(cfg.Ajc.Egress.Topic)
 
 	// GRPC server

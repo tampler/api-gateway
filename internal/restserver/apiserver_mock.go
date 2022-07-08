@@ -90,8 +90,8 @@ func MakeAPIServerMock() (testServer, error) {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
-	pub := MakePublisher(pongMgr, zl, SubMap{})
-	if pub.sub == nil {
+	pub := worker.MakePublisher(pongMgr, zl, worker.SubMap{})
+	if pub.Sub == nil {
 		zl.Fatal()
 	}
 

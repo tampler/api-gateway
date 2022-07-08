@@ -25,8 +25,7 @@ type RestServer struct {
 // MakeRestServer - APIServer factory
 func MakeRestServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong worker.QueueManager) *RestServer {
 	api := worker.MakeAPIServer(c, z, ping, pong)
-	srv := RestServer{*api}
-	return &srv
+	return &RestServer{*api}
 }
 
 func (s *RestServer) GetMetrics(ctx echo.Context) error {
@@ -45,7 +44,7 @@ func (s *RestServer) PostV1(ctx echo.Context) error {
 	defer close(done)
 
 	// Add observer
-	observ := MakeBusObserver(requestID, cc.zl, done)
+	observ := worker.MakeBusObserver(requestID, cc.zl, done)
 	cc.pub.AddObserver(requestID, &observ)
 	defer cc.pub.RemoveObserver(requestID)
 
@@ -106,22 +105,22 @@ func (s *RestServer) PostV1(ctx echo.Context) error {
 		cc.zl.Errorf("FAIL: request timed out %v", req)
 
 	case <-done:
-		if len(observ.err) > 0 {
-			cc.zl.Errorf("Fail: error: %v", string(observ.err))
+		if len(observ.Err) > 0 {
+			cc.zl.Errorf("Fail: error: %v", string(observ.Err))
 		} else {
-			cc.zl.Debugf("Success: response: %v", string(observ.data))
+			cc.zl.Debugf("Success: response: %v", string(observ.Data))
 		}
 	}
 
-	if observ.err != "" {
-		return sendAPIError(ctx, http.StatusInternalServerError, observ.err)
+	if observ.Err != "" {
+		return sendAPIError(ctx, http.StatusInternalServerError, observ.Err)
 	}
 
-	if observ.data == nil {
+	if observ.Data == nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, "Empty buffer")
 	}
 
-	return sendResponse(cc, observ.data, serviceName, resourceName)
+	return sendResponse(cc, observ.Data, serviceName, resourceName)
 }
 
 func sendResponse(ctx *MyContext, data []byte, service, resource string) error {

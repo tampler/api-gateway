@@ -25,7 +25,7 @@ tidy:
 	@ echo "Done!"
 
 upd:
-	@ cd internal/apiserver/ && go get -u && go mod tidy --compat=1.18
+	@ ./scripts/update.sh
 	@ echo "Done!"
 
 apigen:
@@ -36,6 +36,9 @@ protogen:
 
 run:
 	@go run -v ./cmd/proto/main.go
+
+runrest:
+	@go run -v ./cmd/rest/main.go
 
 test: 
 	@ go test -v ./...

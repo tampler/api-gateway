@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
+	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"go.uber.org/zap"
 )
 
@@ -30,9 +31,6 @@ const (
 	aclrCommand      = "NWS::EC2::ACLRule"
 )
 
-// SubMap - event subscriber map
-type SubMap = map[uuid.UUID]Subscriber
-
 // user info from JWT
 type UserInfo struct {
 	ID string
@@ -42,13 +40,14 @@ type UserInfo struct {
 type MyContext struct {
 	echo.Context
 	cfg  config.AppConfig
-	pub  *Publisher
+	pub  *worker.Publisher
 	zl   *zap.SugaredLogger
 	info UserInfo
 }
 
 // MakeMyContext - factory to create a context
-func MakeMyContext(c echo.Context, cfg config.AppConfig, pub *Publisher, zl *zap.SugaredLogger, info UserInfo) *MyContext {
+func MakeMyContext(c echo.Context, cfg config.AppConfig, pub *worker.Publisher,
+	zl *zap.SugaredLogger, info UserInfo) *MyContext {
 	return &MyContext{
 		c, cfg, pub, zl, info,
 	}

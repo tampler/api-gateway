@@ -102,7 +102,7 @@ func main() {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
-	pub := restserver.MakePublisher(pongMgr, zl, map[uuid.UUID]restserver.Subscriber{})
+	pub := worker.MakePublisher(pongMgr, zl, map[uuid.UUID]worker.Subscriber{})
 
 	pub.AddHandlers(cfg.Ajc.Egress.Topic)
 

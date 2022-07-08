@@ -1,7 +1,7 @@
 # Where to store the output
-output: internal/apiserver/api/cc-types.go
+output: pkg/rest/types.go
 # Go package name
-package: api
+package: rest
 # Entities to generate
 generate:
   models: true

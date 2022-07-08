@@ -1,7 +1,7 @@
 # Where to store the output
-output: internal/apiserver/api/cc-client.go
+output: pkg/rest/client.go
 # Go package name
-package: api
+package: rest
 # Entities to generate
 generate:
   client: true

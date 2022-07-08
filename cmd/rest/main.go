@@ -21,9 +21,9 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/api-gateway/internal/restserver"
-	"github.com/neurodyne-web-services/api-gateway/internal/restserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
 	"github.com/neurodyne-web-services/api-gateway/internal/worker"
+	"github.com/neurodyne-web-services/api-gateway/pkg/rest"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
@@ -90,7 +90,7 @@ func main() {
 	cc := restserver.MakeRestServer(&cfg, zl, pingMgr, pongMgr)
 
 	// Build Swagger API
-	swagger, err := api.GetSwagger()
+	swagger, err := rest.GetSwagger()
 	if err != nil {
 		zl.Fatalf("Error loading swagger spec: %s", err)
 	}
@@ -210,7 +210,7 @@ func main() {
 	e.Validator = &restserver.CustomValidator{Validator: validator.New()}
 
 	// We now register our cloudcontrol above as the handler for the interface
-	api.RegisterHandlers(e, cc)
+	rest.RegisterHandlers(e, cc)
 
 	showDebugInfo(zl.Desugar(), &cfg)
 

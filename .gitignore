@@ -2,3 +2,4 @@
 
 # Protobuf generated code
 pkg/genout
+pkg/rest

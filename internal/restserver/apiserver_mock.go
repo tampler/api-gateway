@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
-	"github.com/neurodyne-web-services/api-gateway/internal/restserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/worker"
+	"github.com/neurodyne-web-services/api-gateway/pkg/rest"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 )
@@ -40,7 +40,7 @@ func MakeAPIServerMock() (testServer, error) {
 	defer logger.Sync()
 	zl := logger.Sugar()
 
-	swagger, err := api.GetSwagger()
+	swagger, err := rest.GetSwagger()
 	if err != nil {
 		return serv, fail.Error500(err.Error())
 	}
@@ -113,7 +113,7 @@ func MakeAPIServerMock() (testServer, error) {
 	e.Validator = &CustomValidator{Validator: validator.New()}
 
 	// We now register our cc above as the handler for the interface
-	api.RegisterHandlers(e, cc)
+	rest.RegisterHandlers(e, cc)
 
 	// Setup a JetStream
 	js, err := nc.JetStream()

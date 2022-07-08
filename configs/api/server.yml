@@ -1,7 +1,7 @@
 # Where to store the output
-output: internal/apiserver/api/cc-server.go
+output: pkg/rest/server.go
 # Go package name
-package: api
+package: rest
 # Entities to generate
 generate:
   echo-server: true

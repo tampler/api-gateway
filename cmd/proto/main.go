@@ -14,6 +14,7 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/api-gateway/internal/protoserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
+	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 	"go.uber.org/zap"
@@ -74,11 +75,11 @@ func main() {
 	pingRouter := aj.NewTaskRouter()
 	pongRouter := aj.NewTaskRouter()
 
-	pingMgr := apiserver.MakeQueueManager(pingClient, pingRouter)
-	pongMgr := apiserver.MakeQueueManager(pongClient, pongRouter)
+	pingMgr := worker.MakeQueueManager(pingClient, pingRouter)
+	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
 
 	// Create an instance of our handler which satisfies the generated interface
-	_ = apiserver.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
+	_ = worker.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
 
 	pub := apiserver.MakePublisher(pongMgr, zl, map[uuid.UUID]apiserver.Subscriber{})
 	pub.AddHandlers(cfg.Ajc.Egress.Topic)

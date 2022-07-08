@@ -8,6 +8,7 @@ import (
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/google/uuid"
+	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	"go.uber.org/zap"
 )
@@ -27,12 +28,12 @@ type Subscriber interface {
 type Publisher struct {
 	mutex sync.RWMutex
 	sub   SubMap
-	pong  QueueManager
+	pong  worker.QueueManager
 	zl    *zap.SugaredLogger
 }
 
 // MakePublisher - factory for Publisher
-func MakePublisher(m QueueManager, zl *zap.SugaredLogger, sm SubMap) Publisher {
+func MakePublisher(m worker.QueueManager, zl *zap.SugaredLogger, sm SubMap) Publisher {
 	return Publisher{pong: m, zl: zl, sub: sm}
 }
 

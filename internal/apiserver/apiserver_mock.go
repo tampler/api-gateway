@@ -11,6 +11,7 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 )
@@ -80,11 +81,11 @@ func MakeAPIServerMock() (testServer, error) {
 	pingRouter := aj.NewTaskRouter()
 	pongRouter := aj.NewTaskRouter()
 
-	pingMgr := MakeQueueManager(pingClient, pingRouter)
-	pongMgr := MakeQueueManager(pongClient, pongRouter)
+	pingMgr := worker.MakeQueueManager(pingClient, pingRouter)
+	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
+	cc := worker.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
 
 	// This is how you set up a basic Echo router
 	e := echo.New()

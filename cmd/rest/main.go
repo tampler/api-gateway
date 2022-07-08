@@ -23,6 +23,7 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
+	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
@@ -82,11 +83,11 @@ func main() {
 	pingRouter := aj.NewTaskRouter()
 	pongRouter := aj.NewTaskRouter()
 
-	pingMgr := apiserver.MakeQueueManager(pingClient, pingRouter)
-	pongMgr := apiserver.MakeQueueManager(pongClient, pongRouter)
+	pingMgr := worker.MakeQueueManager(pingClient, pingRouter)
+	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := apiserver.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
+	cc := worker.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
 
 	// Build Swagger API
 	swagger, err := api.GetSwagger()

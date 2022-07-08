@@ -18,10 +18,10 @@ import (
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
-	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"github.com/neurodyne-web-services/api-gateway/internal/restserver"
+	"github.com/neurodyne-web-services/api-gateway/internal/restserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
 	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
@@ -38,7 +38,7 @@ func main() {
 
 	// Build a global config
 	var cfg config.AppConfig
-	var info apiserver.UserInfo
+	var info restserver.UserInfo
 
 	if err := cfg.AppInit(CONFIG_NAME, CONFIG_PATH); err != nil {
 		log.Fatalf("Config failed %s", err.Error())
@@ -87,7 +87,7 @@ func main() {
 	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := apiserver.MakeRestServer(&cfg, zl, pingMgr, pongMgr)
+	cc := restserver.MakeRestServer(&cfg, zl, pingMgr, pongMgr)
 
 	// Build Swagger API
 	swagger, err := api.GetSwagger()
@@ -102,14 +102,14 @@ func main() {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
-	pub := apiserver.MakePublisher(pongMgr, zl, map[uuid.UUID]apiserver.Subscriber{})
+	pub := restserver.MakePublisher(pongMgr, zl, map[uuid.UUID]restserver.Subscriber{})
 
 	pub.AddHandlers(cfg.Ajc.Egress.Topic)
 
 	// Add custom context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := apiserver.MakeMyContext(c, cfg, &pub, zl, info)
+			cc := restserver.MakeMyContext(c, cfg, &pub, zl, info)
 			return next(cc)
 		}
 	})
@@ -207,7 +207,7 @@ func main() {
 	e.Use(oapimw.OapiRequestValidator(swagger))
 
 	// Instantiate custom validators
-	e.Validator = &apiserver.CustomValidator{Validator: validator.New()}
+	e.Validator = &restserver.CustomValidator{Validator: validator.New()}
 
 	// We now register our cloudcontrol above as the handler for the interface
 	api.RegisterHandlers(e, cc)

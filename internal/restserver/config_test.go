@@ -1,4 +1,4 @@
-package apiserver
+package restserver
 
 const (
 	timeFormat = "02 Jan 06 15:04:05 MST"

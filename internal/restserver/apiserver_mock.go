@@ -1,4 +1,4 @@
-package apiserver
+package restserver
 
 import (
 	"fmt"
@@ -8,9 +8,9 @@ import (
 	oapimw "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"github.com/neurodyne-web-services/api-gateway/internal/restserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"

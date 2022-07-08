@@ -9,10 +9,10 @@ import (
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/google/uuid"
-	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/api-gateway/internal/protoserver"
+	apiserver "github.com/neurodyne-web-services/api-gateway/internal/restserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
 	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"

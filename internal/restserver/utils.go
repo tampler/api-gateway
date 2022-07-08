@@ -1,4 +1,4 @@
-package apiserver
+package restserver
 
 import (
 	"github.com/labstack/echo/v4"

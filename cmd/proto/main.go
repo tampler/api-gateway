@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -12,8 +11,9 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"github.com/neurodyne-web-services/api-gateway/internal/protoserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
-	"github.com/neurodyne-web-services/api-gateway/pkg/greeter"
+	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
@@ -25,17 +25,6 @@ const (
 	CONFIG_PATH = "./configs"
 	CONFIG_NAME = "app"
 )
-
-// server is used to implement helloworld.GreeterServer.
-type server struct {
-	greeter.UnimplementedGreeterServer
-}
-
-// SayHello implements helloworld.GreeterServer
-func (s *server) SayHello(ctx context.Context, in *greeter.HelloRequest) (*greeter.HelloReply, error) {
-	log.Printf("Received: %v", in.GetName())
-	return &greeter.HelloReply{Message: "Hello " + in.GetName()}, nil
-}
 
 func main() {
 
@@ -97,7 +86,7 @@ func main() {
 	// GRPC server
 	var opts *[]grpc.ServerOption
 
-	opts, err = buildGRPCOpts(&cfg)
+	opts, err = buildServerOpts(&cfg)
 	if err != nil {
 		zl.Fatal(err)
 	}
@@ -109,7 +98,7 @@ func main() {
 
 	s := grpc.NewServer(*opts...)
 
-	greeter.RegisterGreeterServer(s, &server{})
+	cc.RegisterCloudControlServiceServer(s, &protoserver.Server{})
 
 	showDebugInfo(zl.Desugar(), &cfg)
 	if err := s.Serve(lis); err != nil {
@@ -117,15 +106,8 @@ func main() {
 	}
 }
 
-// showDebugInfo - this prints envs to ease deployment and debug
-func showDebugInfo(zl *zap.Logger, cfg *config.AppConfig) {
-	zl.Info("NATS URL: ", zap.String("NATS_URL", os.Getenv("NATS_URL")))
-	zl.Info("GRPC URL: ", zap.Int("localhost:", cfg.Grpc.Port))
-	zl.Info("GRPC Secure: ", zap.Bool("auth", cfg.Grpc.AuthEnabled))
-	zl.Info("Job timeout:", zap.Int("timeout, sec", cfg.Sdk.JobTime))
-}
-
-func buildGRPCOpts(cfg *config.AppConfig) (*[]grpc.ServerOption, error) {
+// buildServerOpts - returns a GRPC server options
+func buildServerOpts(cfg *config.AppConfig) (*[]grpc.ServerOption, error) {
 
 	if !cfg.Grpc.AuthEnabled {
 		opts := []grpc.ServerOption{}
@@ -145,4 +127,12 @@ func buildGRPCOpts(cfg *config.AppConfig) (*[]grpc.ServerOption, error) {
 	}
 
 	return &opts, nil
+}
+
+// showDebugInfo - this prints envs to ease deployment and debug
+func showDebugInfo(zl *zap.Logger, cfg *config.AppConfig) {
+	zl.Info("NATS URL: ", zap.String("NATS_URL", os.Getenv("NATS_URL")))
+	zl.Info("GRPC URL: ", zap.Int("localhost", cfg.Grpc.Port))
+	zl.Info("GRPC Secure: ", zap.Bool("auth", cfg.Grpc.AuthEnabled))
+	zl.Info("Job timeout:", zap.Int("timeout, sec", cfg.Sdk.JobTime))
 }

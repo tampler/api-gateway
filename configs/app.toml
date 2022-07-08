@@ -1,6 +1,6 @@
 # Full app config
 [auth]
-auth_enabled = true
+auth_enabled = false
 
 [grpc]
 cert_file = "./certs/public.crt"

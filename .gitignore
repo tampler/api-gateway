@@ -1,1 +1,4 @@
 .vscode
+
+# Protobuf generated code
+pkg/genout

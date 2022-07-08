@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// httpConfig - config for Http and JWT server
+// httpConfig - config for REST HTTP
 type httpConfig struct {
 	Port          int
 	AuthEnabled   bool
@@ -19,6 +19,13 @@ type httpConfig struct {
 	AllowCompress bool
 	AllowLogging  bool
 	CompressLevel int
+}
+
+// grpcConfig - config for GRPC server
+type grpcConfig struct {
+	Port     int
+	CertFile string
+	KeyFile  string
 }
 
 // debugConfig - config for debugging
@@ -55,6 +62,7 @@ type AppConfig struct {
 	Log   logConfig
 	Debug debugConfig
 	Http  httpConfig
+	Grpc  grpcConfig
 	Ajc   ajcConfig
 	Sdk   sdkConfig
 }
@@ -71,6 +79,11 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 
 	// auth
 	cfg.Http.AuthEnabled = viper.GetBool("auth.auth_enabled")
+
+	// grpc
+	cfg.Grpc.Port = viper.GetInt("grpc.port")
+	cfg.Grpc.CertFile = viper.GetString("grpc.cert_file")
+	cfg.Grpc.KeyFile = viper.GetString("grpc.key_file")
 
 	// http setup
 	cfg.Http.Port = viper.GetInt("http.port")

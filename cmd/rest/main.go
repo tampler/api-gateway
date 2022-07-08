@@ -20,8 +20,8 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver/api"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
-	njwt "github.com/neurodyne-web-services/api-gateway/internal/jwt"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
+	"github.com/neurodyne-web-services/api-gateway/internal/token"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
@@ -134,13 +134,13 @@ func main() {
 		r := e.Group("/")
 		{
 			config := middleware.JWTConfig{
-				ParseTokenFunc: func(token string, c echo.Context) (interface{}, error) {
-					err := njwt.InitAuth(authData, pemData)
+				ParseTokenFunc: func(inputToken string, c echo.Context) (interface{}, error) {
+					err := token.InitAuth(authData, pemData)
 					if err != nil {
 						return nil, err
 					}
 
-					claims, err := auth.ParseJwtToken(token)
+					claims, err := auth.ParseJwtToken(inputToken)
 					if err != nil {
 						return nil, errors.New("failed to parse token")
 					}

@@ -1,0 +1,26 @@
+syntax = "proto3";
+                                       
+package cc_service;                                       
+option go_package = "pkg/genout/cc";
+
+service CloudControlService {
+  rpc UnaryCall (APIRequest) returns (APIResponse) {}
+}
+                
+message APICommand {
+  string  service = 1;
+  string  resource = 2;
+  string  action = 3;
+  repeated string params = 4;
+}
+
+message APIRequest {
+  APICommand cmd = 1;
+  bytes jobID = 2;
+}
+
+message APIResponse {
+  bytes   data = 1;
+  string  err = 2;
+  bytes   jobID = 3;
+}

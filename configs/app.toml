@@ -1,6 +1,11 @@
 # Full app config
 [auth]
-auth_enabled = false
+auth_enabled = true
+
+[grpc]
+cert_file = "./certs/public.crt"
+key_file = "./certs/private.key"
+port = 50051
 
 [http]
 auth_file = "/tmp/app.json"

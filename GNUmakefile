@@ -1,8 +1,7 @@
 PKG_NAME	=		api-gateway
 IMG_NAME 	= 	api-gateway
 FILES			?=	$$(find . -name '*.go' )
-
-default: fmt 
+CERTS 		= ./certs
 
 fmt:
 	@gofmt -w $(FILES)
@@ -16,6 +15,11 @@ vet:
 		exit 1; \
 	fi
 
+cert:
+	@openssl genrsa -out ${CERTS}/private.key 4096
+	@openssl req -new -x509 -sha256 -days 1825 -addext "subjectAltName = DNS:localhost" \
+	-key ${CERTS}/private.key -out ${CERTS}/public.crt
+
 tidy:
 	@ go mod tidy --compat=1.18
 	@ echo "Done!"
@@ -28,10 +32,10 @@ apigen:
 	@./scripts/apigen.sh
 
 protogen:
-	@protoc -I proto proto/*.proto --proto_path=./proto --go_out=./proto
+	@./scripts/protogen.sh
 
 run:
-	@go run -v ./cmd/main.go
+	@go run -v ./cmd/proto/main.go
 
 test: 
 	@ go test -v ./...
@@ -50,4 +54,4 @@ semgrep:
 image:
 	@./scripts/build.sh	
 
-.PHONY: test lint vet fmt
+.PHONY: test lint vet fmt protogen cert

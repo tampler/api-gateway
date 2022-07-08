@@ -93,7 +93,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 
 	case <-done:
 		if len(observ.err) > 0 {
-			cc.zl.Debugf("Fail: error: %v", string(observ.err))
+			cc.zl.Errorf("Fail: error: %v", string(observ.err))
 		} else {
 			cc.zl.Debugf("Success: response: %v", string(observ.data))
 		}

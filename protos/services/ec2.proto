@@ -1,0 +1,30 @@
+syntax = "proto3";
+                                       
+package ec2_service;                                       
+option go_package = "pkg/genout/ec2";
+                
+import "google/protobuf/timestamp.proto";
+                                       
+enum EC2Resource {
+  SSH_KEYPAIR = 0;
+  VPC = 1;
+}
+                                          
+message ItemWithID {
+  string name = 1;
+  string id = 2;
+  optional google.protobuf.Timestamp created = 3;
+}
+
+
+message Location {
+  string zone = 1;
+  string domain = 2;
+  string netDomain = 3;
+  string account = 4;
+}
+
+message SSHKeypair {
+  ItemWithID id = 1;
+  string fingerprint = 2;
+}

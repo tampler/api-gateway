@@ -34,8 +34,8 @@ func AvailableResources() []string {
 	return out
 }
 
-func CommandValidator(command interface{}) error {
-	cmd := strings.Split(command.(string), delimiter)
+func CommandValidator(command string) error {
+	cmd := strings.Split(command, delimiter)
 
 	if cmd[0] != "NWS" {
 		return fmt.Errorf("invalid provider specified. Default: NWS")

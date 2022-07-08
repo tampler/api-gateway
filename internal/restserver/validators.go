@@ -18,7 +18,7 @@ type CustomValidator struct {
 
 func (cv *CustomValidator) Validate(cmd interface{}) error {
 	// Validate Command format
-	if err := token.CommandValidator(cmd); err != nil {
+	if err := token.CommandValidator(cmd.(string)); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 

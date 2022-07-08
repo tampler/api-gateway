@@ -9,10 +9,10 @@ import (
 	"time"
 
 	aj "github.com/choria-io/asyncjobs"
+	"github.com/google/uuid"
 
 	"github.com/labstack/echo/v4"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
-	uuid "github.com/satori/go.uuid"
 )
 
 func (s *APIServer) GetMetrics(ctx echo.Context) error {
@@ -25,7 +25,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	cc := ctx.(*MyContext)
 
 	// Create and store request ID
-	requestID := uuid.NewV4()
+	requestID := uuid.New()
 
 	done := make(chan bool)
 	defer close(done)
@@ -114,7 +114,7 @@ func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 
 	// Repack to the full Runner Result
 	out := APIResponse{
-		JobID: uuid.Nil,
+		JobID: uuid.UUID(uuid.New()),
 		Err:   "",
 		Data:  data,
 	}

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	aj "github.com/choria-io/asyncjobs"
+	"github.com/google/uuid"
 	"github.com/neurodyne-web-services/api-gateway/internal/apiserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
@@ -15,7 +16,6 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
 	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
-	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

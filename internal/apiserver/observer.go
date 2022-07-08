@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	aj "github.com/choria-io/asyncjobs"
+	"github.com/google/uuid"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
-	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 )
 

@@ -14,6 +14,7 @@ import (
 	oapimw "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -23,7 +24,6 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
-	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )

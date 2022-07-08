@@ -4,10 +4,10 @@ import (
 	"context"
 
 	aj "github.com/choria-io/asyncjobs"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
-	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 )
 

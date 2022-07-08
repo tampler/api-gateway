@@ -10,16 +10,30 @@ import (
 
 	aj "github.com/choria-io/asyncjobs"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 
 	"github.com/labstack/echo/v4"
+	"github.com/neurodyne-web-services/api-gateway/internal/config"
+	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
 )
 
-func (s *APIServer) GetMetrics(ctx echo.Context) error {
+type RestServer struct {
+	worker.APIServer
+}
+
+// MakeRestServer - APIServer factory
+func MakeRestServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong worker.QueueManager) *RestServer {
+	api := worker.MakeAPIServer(c, z, ping, pong)
+	srv := RestServer{*api}
+	return &srv
+}
+
+func (s *RestServer) GetMetrics(ctx echo.Context) error {
 	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
 
-func (s *APIServer) PostV1(ctx echo.Context) error {
+func (s *RestServer) PostV1(ctx echo.Context) error {
 
 	// Apply custom context
 	cc := ctx.(*MyContext)
@@ -81,7 +95,7 @@ func (s *APIServer) PostV1(ctx echo.Context) error {
 	cc.zl.Debugf("PING adding task %v", cmd)
 
 	// Submit a task into the PING queue
-	err = s.ping.client.EnqueueTask(context.Background(), task)
+	err = s.Ping.Client.EnqueueTask(context.Background(), task)
 	if err != nil {
 		return sendAPIError(ctx, http.StatusInternalServerError, fmt.Sprintf("Failed to submit a PING task: %v", err))
 	}

@@ -40,7 +40,7 @@ func MakePublisher(m worker.QueueManager, zl *zap.SugaredLogger, sm SubMap) Publ
 // AddHandlers - add AJC queue handlers for a given topic
 func (p *Publisher) AddHandlers(topic string) error {
 
-	err := p.pong.router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
+	err := p.pong.Router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
 
 		var resp APIResponse
 

@@ -87,7 +87,7 @@ func main() {
 	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := worker.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
+	cc := apiserver.MakeRestServer(&cfg, zl, pingMgr, pongMgr)
 
 	// Build Swagger API
 	swagger, err := api.GetSwagger()

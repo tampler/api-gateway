@@ -10,26 +10,26 @@ import (
 
 // QueueManager - an async queue job manager
 type QueueManager struct {
-	client *aj.Client
-	router *aj.Mux
+	Client *aj.Client
+	Router *aj.Mux
 }
 
 // MakeQueueManager - factory for QueueManager
 func MakeQueueManager(c *aj.Client, r *aj.Mux) QueueManager {
-	return QueueManager{client: c, router: r}
+	return QueueManager{Client: c, Router: r}
 }
 
 // Run - runs the client and returns an erorr in a channel
 func (m QueueManager) Run(ctx context.Context) error {
-	return m.client.Run(ctx, m.router)
+	return m.Client.Run(ctx, m.Router)
 }
 
 // APIServer - top level execution engine
 type APIServer struct {
 	zl   *zap.SugaredLogger
 	cfg  *config.AppConfig
-	ping QueueManager
-	pong QueueManager
+	Ping QueueManager
+	Pong QueueManager
 }
 
 // MakeAPIServer - APIServer factory
@@ -37,8 +37,8 @@ func MakeAPIServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong QueueMa
 	srv := APIServer{
 		zl:   z,
 		cfg:  c,
-		ping: ping,
-		pong: pong,
+		Ping: ping,
+		Pong: pong,
 	}
 	return &srv
 }

@@ -85,7 +85,7 @@ func MakeAPIServerMock() (testServer, error) {
 	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
 
 	// Create an instance of our handler which satisfies the generated interface
-	cc := worker.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
+	cc := MakeRestServer(&cfg, zl, pingMgr, pongMgr)
 
 	// This is how you set up a basic Echo router
 	e := echo.New()

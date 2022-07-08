@@ -31,8 +31,8 @@ func (m QueueManager) Run(ctx context.Context) error {
 
 // APIServer - top level execution engine
 type APIServer struct {
-	zl   *zap.SugaredLogger
-	cfg  *config.AppConfig
+	Zl   *zap.SugaredLogger
+	Cfg  *config.AppConfig
 	Ping QueueManager
 	Pong QueueManager
 }
@@ -40,8 +40,8 @@ type APIServer struct {
 // MakeAPIServer - APIServer factory
 func MakeAPIServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong QueueManager) *APIServer {
 	srv := APIServer{
-		zl:   z,
-		cfg:  c,
+		Zl:   z,
+		Cfg:  c,
 		Ping: ping,
 		Pong: pong,
 	}

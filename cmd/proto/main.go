@@ -77,9 +77,6 @@ func main() {
 	pingMgr := worker.MakeQueueManager(pingClient, pingRouter)
 	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
 
-	// Create an instance of our handler which satisfies the generated interface
-	_ = worker.MakeAPIServer(&cfg, zl, pingMgr, pongMgr)
-
 	pub := worker.MakePublisher(pongMgr, zl, map[uuid.UUID]worker.Subscriber{})
 	pub.AddHandlers(cfg.Ajc.Egress.Topic)
 
@@ -98,7 +95,7 @@ func main() {
 
 	s := grpc.NewServer(*opts...)
 
-	cc.RegisterCloudControlServiceServer(s, &protoserver.Server{})
+	cc.RegisterCloudControlServiceServer(s, protoserver.MakeProtoServer(&cfg, zl, pingMgr, pongMgr, pub))
 
 	showDebugInfo(zl.Desugar(), &cfg)
 	if err := s.Serve(lis); err != nil {

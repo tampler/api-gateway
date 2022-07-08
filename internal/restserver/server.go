@@ -18,21 +18,22 @@ import (
 	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
 )
 
-type RestServer struct {
+// protoServer is used to implement the Cloud Control REST server
+type restServer struct {
 	worker.APIServer
 }
 
 // MakeRestServer - APIServer factory
-func MakeRestServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong worker.QueueManager) *RestServer {
+func MakeRestServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong worker.QueueManager) *restServer {
 	api := worker.MakeAPIServer(c, z, ping, pong)
-	return &RestServer{*api}
+	return &restServer{*api}
 }
 
-func (s *RestServer) GetMetrics(ctx echo.Context) error {
+func (s *restServer) GetMetrics(ctx echo.Context) error {
 	return sendAPIError(ctx, http.StatusInternalServerError, "NYI - not yet implemented")
 }
 
-func (s *RestServer) PostV1(ctx echo.Context) error {
+func (s *restServer) PostV1(ctx echo.Context) error {
 
 	// Apply custom context
 	cc := ctx.(*MyContext)

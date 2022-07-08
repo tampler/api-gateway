@@ -10,7 +10,7 @@ import (
 )
 
 func Test_unary(t *testing.T) {
-	srv := Server{}
+	srv := protoServer{}
 
 	cmd := cc.APICommand{
 		Service:  "EC2",

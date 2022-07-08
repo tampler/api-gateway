@@ -94,16 +94,12 @@ func main() {
 	pub := apiserver.MakePublisher(pongMgr, zl, map[uuid.UUID]apiserver.Subscriber{})
 	pub.AddHandlers(cfg.Ajc.Egress.Topic)
 
-	showDebugInfo(zl.Desugar(), &cfg)
-
 	// GRPC server
 	var opts *[]grpc.ServerOption
 
-	if cfg.Http.AuthEnabled {
-		opts, err = buildSecureOpts(&cfg)
-		if err != nil {
-			zl.Fatal(err)
-		}
+	opts, err = buildGRPCOpts(&cfg)
+	if err != nil {
+		zl.Fatal(err)
 	}
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Grpc.Port))
@@ -115,7 +111,7 @@ func main() {
 
 	greeter.RegisterGreeterServer(s, &server{})
 
-	zl.Infof("server listening at %v", lis.Addr())
+	showDebugInfo(zl.Desugar(), &cfg)
 	if err := s.Serve(lis); err != nil {
 		zl.Fatalf("failed to serve: %v", err)
 	}
@@ -124,10 +120,17 @@ func main() {
 // showDebugInfo - this prints envs to ease deployment and debug
 func showDebugInfo(zl *zap.Logger, cfg *config.AppConfig) {
 	zl.Info("NATS URL: ", zap.String("NATS_URL", os.Getenv("NATS_URL")))
+	zl.Info("GRPC URL: ", zap.Int("localhost:", cfg.Grpc.Port))
+	zl.Info("GRPC Secure: ", zap.Bool("auth", cfg.Grpc.AuthEnabled))
 	zl.Info("Job timeout:", zap.Int("timeout, sec", cfg.Sdk.JobTime))
 }
 
-func buildSecureOpts(cfg *config.AppConfig) (*[]grpc.ServerOption, error) {
+func buildGRPCOpts(cfg *config.AppConfig) (*[]grpc.ServerOption, error) {
+
+	if !cfg.Grpc.AuthEnabled {
+		opts := []grpc.ServerOption{}
+		return &opts, nil
+	}
 
 	cert, err := tls.LoadX509KeyPair(cfg.Grpc.CertFile, cfg.Grpc.KeyFile)
 	if err != nil {

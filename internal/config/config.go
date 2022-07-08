@@ -23,9 +23,10 @@ type httpConfig struct {
 
 // grpcConfig - config for GRPC server
 type grpcConfig struct {
-	Port     int
-	CertFile string
-	KeyFile  string
+	AuthEnabled bool
+	Port        int
+	CertFile    string
+	KeyFile     string
 }
 
 // debugConfig - config for debugging
@@ -78,7 +79,7 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 	}
 
 	// auth
-	cfg.Http.AuthEnabled = viper.GetBool("auth.auth_enabled")
+	cfg.Grpc.AuthEnabled = viper.GetBool("auth.auth_enabled")
 
 	// grpc
 	cfg.Grpc.Port = viper.GetInt("grpc.port")

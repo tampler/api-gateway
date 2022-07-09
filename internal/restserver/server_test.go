@@ -9,7 +9,7 @@ import (
 
 	"github.com/buger/jsonparser"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/utils"
-	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
+	cc "github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,7 +56,7 @@ func Test_sess(t *testing.T) {
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action

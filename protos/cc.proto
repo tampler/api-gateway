@@ -16,11 +16,11 @@ message APICommand {
 
 message APIRequest {
   APICommand cmd = 1;
-  bytes jobID = 2;
+  string jobID = 2;
 }
 
 message APIResponse {
   bytes   data = 1;
   string  err = 2;
-  bytes   jobID = 3;
+  string  jobID = 3;
 }

@@ -1,7 +1,6 @@
 package restserver
 
 import (
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/nats-io/nats.go"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
@@ -68,13 +67,13 @@ type APICommand struct {
 
 // APIRequest - top level API request
 type APIRequest struct {
-	JobID uuid.UUID  `json:"jobid"`
+	JobID string     `json:"jobid"`
 	Cmd   APICommand `json:"cmd"`
 }
 
 // APIResponse - top level API response
 type APIResponse struct {
-	JobID uuid.UUID `json:"jobid"`
-	Data  []byte    `json:"data"`
-	Err   string    `json:"err"`
+	JobID string `json:"jobid"`
+	Data  []byte `json:"data"`
+	Err   string `json:"err"`
 }

@@ -4,5 +4,7 @@ SERVICE_LIST="\
 restserver \
 protoserver \
 logging \
+config \
 token \
+worker \
 "

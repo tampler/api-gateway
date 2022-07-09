@@ -24,13 +24,7 @@ func (p *Publisher) AddHandlers(topic string) error {
 			return nil, err
 		}
 
-		id, err := uuid.FromBytes(resp.JobID)
-		if err != nil {
-			p.Zl.Error(err)
-			return nil, err
-		}
-
-		return nil, p.NotifyObserver(id, BusEvent{Data: resp.Data, Err: resp.Err})
+		return nil, p.NotifyObserver(uuid.MustParse(resp.JobID), BusEvent{Data: resp.Data, Err: resp.Err})
 	})
 
 	if err != nil {

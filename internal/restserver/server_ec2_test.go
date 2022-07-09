@@ -9,7 +9,7 @@ import (
 
 	"github.com/buger/jsonparser"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/utils"
-	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
+	cc "github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +31,8 @@ func Test_ssh(t *testing.T) {
 
 	domainID := string(tmp.Value())
 
+	var sshKeyID string
+
 	data := []struct {
 		name    string
 		action  string
@@ -39,25 +41,39 @@ func Test_ssh(t *testing.T) {
 	}{
 		{"EC2 SSH List", "List", sshCommand, []string{domainID, testAcc}},
 		{"EC2 SSH Create", "Create", sshCommand, []string{sshKeyName, domainID, testAcc, pubkey}},
-		{"EC2 SSH Read", "Read", sshCommand, []string{domainID, testAcc}},
+		{"EC2 SSH Resolve", "Resolve", sshCommand, []string{domainID, testAcc, sshKeyName}},
+		{"EC2 SSH Read", "Read", sshCommand, []string{}},
 		{"EC2 SSH Delete", "Delete", sshCommand, []string{sshKeyName, domainID, testAcc}},
 		{"EC2 SSH Nuke", "Nuke", sshCommand, []string{testAcc, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action
 			req.Cmd.Command = d.command
 			req.Cmd.Params = d.params
 
+			if d.action == "Read" || d.action == "Delete" {
+				req.Cmd.Params = append(req.Cmd.Params, sshKeyID)
+			}
+
 			res, err := req.MakeRequest()
 			assert.NoErrorf(t, err, fmt.Sprintf("failed on CC client request: %v \n", err))
 
 			assert.Equal(t, http.StatusCreated, res.StatusCode())
 			assert.NotEmpty(t, res.Body)
+
+			data, err := utils.DecodeJSONBytes(res.Body)
+			assert.NoError(t, err)
+
+			// Resolve runtime VPC ID
+			if d.action == "Resolve" {
+				sshKeyID, err = jsonparser.GetString(data, "id", "id")
+				assert.NoError(t, err)
+			}
 		})
 		time.Sleep(sleepTime * time.Millisecond)
 	}
@@ -83,7 +99,7 @@ func TestDS_domain(t *testing.T) {
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action
@@ -142,7 +158,7 @@ func Test_vpc(t *testing.T) {
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action
@@ -224,7 +240,7 @@ func Test_net(t *testing.T) {
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action
@@ -317,7 +333,7 @@ func Test_tmpl(t *testing.T) {
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action
@@ -435,7 +451,7 @@ func Test_inst(t *testing.T) {
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action
@@ -560,7 +576,7 @@ func Test_offerings(t *testing.T) {
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action
@@ -682,7 +698,7 @@ func Test_acl(t *testing.T) {
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action
@@ -821,7 +837,7 @@ func Test_aclrule(t *testing.T) {
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
 
-			req, err := api.MakePlainClient(getEndpoint(port))
+			req, err := cc.MakePlainClient(getEndpoint(port))
 			assert.NoError(t, err)
 
 			req.Cmd.Action = d.action

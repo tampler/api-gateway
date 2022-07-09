@@ -15,7 +15,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/worker"
-	"github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol/api"
+	"github.com/neurodyne-web-services/api-gateway/pkg/rest"
 )
 
 // protoServer is used to implement the Cloud Control REST server
@@ -50,7 +50,7 @@ func (s *restServer) PostV1(ctx echo.Context) error {
 	defer cc.pub.RemoveObserver(requestID)
 
 	// Extract API request from REST
-	var req api.CCReq
+	var req rest.Req
 
 	err := ctx.Bind(&req)
 	if err != nil {
@@ -76,7 +76,7 @@ func (s *restServer) PostV1(ctx echo.Context) error {
 
 	// Extract API command
 	cmd := APIRequest{
-		JobID: requestID,
+		JobID: requestID.String(),
 		Cmd: APICommand{
 			Service:  serviceName,
 			Resource: resourceName,
@@ -128,7 +128,7 @@ func sendResponse(ctx *MyContext, data []byte, service, resource string) error {
 
 	// Repack to the full Runner Result
 	out := APIResponse{
-		JobID: uuid.UUID(uuid.New()),
+		JobID: uuid.NewString(),
 		Err:   "",
 		Data:  data,
 	}

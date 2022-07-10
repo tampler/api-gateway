@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/fail"
-	"go.uber.org/zap"
 )
 
 // AddHandlers - add AJC queue handlers for a given topic
@@ -19,12 +18,22 @@ func (p *Publisher) AddHandlers(topic string) error {
 
 		var resp cc.APIResponse
 
+		p.Zl.Debugf("PONG: pull task %v", string(t.Payload))
+
 		if err := json.Unmarshal(t.Payload, &resp); err != nil {
 			p.Zl.Error(err)
 			return nil, err
 		}
 
-		return nil, p.NotifyObserver(uuid.MustParse(resp.JobID), BusEvent{Data: resp.Data, Err: resp.Err})
+		id, err := uuid.Parse(resp.JobID)
+		if err != nil {
+			p.Zl.Error(err)
+			return nil, err
+		}
+
+		// p.Zl.Debugf("PONG task ID %s", id)
+
+		return nil, p.NotifyObserver(id, BusEvent{Data: resp.Data, Err: resp.Err})
 	})
 
 	if err != nil {
@@ -39,7 +48,7 @@ func (p *Publisher) AddHandlers(topic string) error {
 }
 
 func (p *Publisher) AddObserver(id uuid.UUID, sub Subscriber) {
-	// p.Zl.Debugf("Adding observer: %s", id.String())
+	// p.Zl.Debugf("Adding observer: %s", id)
 	p.Mutex.Lock()
 	defer p.Mutex.Unlock()
 	p.Sub[id] = sub
@@ -71,16 +80,14 @@ func (p *Publisher) NotifyObserver(id uuid.UUID, e BusEvent) error {
 
 // BusObserver - AJC async listener
 type BusObserver struct {
-	zl   *zap.SugaredLogger
-	id   uuid.UUID
 	Data []byte
 	Err  string
 	Done chan bool
 }
 
 // MakeBusObserver - factory for Bus observer
-func MakeBusObserver(id uuid.UUID, zl *zap.SugaredLogger, done chan bool) BusObserver {
-	return BusObserver{id: id, zl: zl, Done: done}
+func MakeBusObserver(done chan bool) BusObserver {
+	return BusObserver{Done: done}
 }
 
 // Notify - notification with unblocking for listeners

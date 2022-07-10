@@ -45,7 +45,7 @@ func (s *restServer) PostV1(ctx echo.Context) error {
 	defer close(done)
 
 	// Add observer
-	observ := worker.MakeBusObserver(requestID, cc.zl, done)
+	observ := worker.MakeBusObserver(done)
 	cc.pub.AddObserver(requestID, &observ)
 	defer cc.pub.RemoveObserver(requestID)
 

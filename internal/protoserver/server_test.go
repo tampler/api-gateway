@@ -81,7 +81,7 @@ func Test_unary(t *testing.T) {
 		Service:  "EC2",
 		Resource: "SSHKeypair",
 		Action:   "List",
-		Params:   []string{},
+		Params:   []string{"4608f97b-d5d4-11ec-a835-0242ac110002", "admin"},
 	}
 
 	req := cc.APIRequest{

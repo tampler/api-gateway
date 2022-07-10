@@ -88,13 +88,9 @@ func (s *protoServer) UnaryCall(ctx context.Context, req *cc.APIRequest) (*cc.AP
 		}
 	}
 
-	if observ.Err != "" {
-		return nil, status.Errorf(codes.Aborted, observ.Err)
-	}
-
-	if observ.Data == nil {
-		return nil, status.Errorf(codes.Aborted, "Empty Buffer")
-	}
+	resp.JobID = requestID.String()
+	resp.Data = observ.Data
+	resp.Err = observ.Err
 
 	return &resp, nil
 }

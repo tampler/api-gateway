@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/buger/jsonparser"
+	"github.com/neurodyne-web-services/api-gateway/internal/common"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/utils"
 	cc "github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ func Test_ssh(t *testing.T) {
 	// os.Setenv("NATS_URL", "192.168.1.93:37487")
 	// os.Setenv("NATS_USER", "local")
 	// os.Setenv("NATS_PASS", "")
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -39,12 +40,12 @@ func Test_ssh(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"EC2 SSH List", "List", sshCommand, []string{domainID, testAcc}},
-		{"EC2 SSH Create", "Create", sshCommand, []string{sshKeyName, domainID, testAcc, pubkey}},
-		{"EC2 SSH Resolve", "Resolve", sshCommand, []string{domainID, testAcc, sshKeyName}},
+		{"EC2 SSH List", "List", sshCommand, []string{domainID, common.TestAcc}},
+		{"EC2 SSH Create", "Create", sshCommand, []string{common.SshKeyName, domainID, common.TestAcc, common.Pubkey}},
+		{"EC2 SSH Resolve", "Resolve", sshCommand, []string{domainID, common.TestAcc, common.SshKeyName}},
 		{"EC2 SSH Read", "Read", sshCommand, []string{}},
-		{"EC2 SSH Delete", "Delete", sshCommand, []string{sshKeyName, domainID, testAcc}},
-		{"EC2 SSH Nuke", "Nuke", sshCommand, []string{testAcc, domainID}},
+		{"EC2 SSH Delete", "Delete", sshCommand, []string{common.SshKeyName, domainID, common.TestAcc}},
+		{"EC2 SSH Nuke", "Nuke", sshCommand, []string{common.TestAcc, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -75,12 +76,12 @@ func Test_ssh(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }
 
 func TestDS_domain(t *testing.T) {
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -94,8 +95,8 @@ func TestDS_domain(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"EC2 Zone Read", "Read", zoneCommand, []string{testZone}},
-		{"EC2 Domain Read", "Read", domCommand, []string{testDomain}},
+		{"EC2 Zone Read", "Read", zoneCommand, []string{common.TestZone}},
+		{"EC2 Domain Read", "Read", domCommand, []string{common.TestDomain}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -111,13 +112,13 @@ func TestDS_domain(t *testing.T) {
 			assert.Equal(t, http.StatusCreated, res.StatusCode())
 			assert.NotEmpty(t, res.Body)
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }
 
 func Test_vpc(t *testing.T) {
 
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -148,12 +149,12 @@ func Test_vpc(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"EC2 VPC List", "List", vpcCommand, []string{zoneID, domainID, testAcc}},
-		{"EC2 VPC Create", "Create", vpcCommand, []string{vpcName, zoneID, domainID, testAcc, vpcOfferID, vpcCidr4, netDomain}},
-		{"EC2 VPC Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, testAcc, vpcName}},
+		{"EC2 VPC List", "List", vpcCommand, []string{zoneID, domainID, common.TestAcc}},
+		{"EC2 VPC Create", "Create", vpcCommand, []string{common.VpcName, zoneID, domainID, common.TestAcc, vpcOfferID, common.VpcCidr4, common.NetDomain}},
+		{"EC2 VPC Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, common.TestAcc, common.VpcName}},
 		{"EC2 VPC Read", "Read", vpcCommand, []string{}},
 		{"EC2 VPC Delete", "Delete", vpcCommand, []string{}},
-		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{testAcc, zoneID, domainID}},
+		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{common.TestAcc, zoneID, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -186,12 +187,12 @@ func Test_vpc(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }
 
 func Test_net(t *testing.T) {
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -227,15 +228,15 @@ func Test_net(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"EC2 Net List", "List", netCommand, []string{zoneID, domainID, testAcc}},
-		{"EC2 VPC Create", "Create", vpcCommand, []string{vpcName, zoneID, domainID, testAcc, vpcOfferID, vpcCidr4, netDomain}},
-		{"EC2 VPC ID Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, testAcc, vpcName}},
-		{"EC2 Net Create", "Create", netCommand, []string{netName, zoneID, domainID, testAcc, netCidr4, emptyCIDR6, netOfferID, netDomain}},
-		{"EC2 Net Resolve", "Resolve", netCommand, []string{zoneID, domainID, testAcc, netName}},
+		{"EC2 Net List", "List", netCommand, []string{zoneID, domainID, common.TestAcc}},
+		{"EC2 VPC Create", "Create", vpcCommand, []string{common.VpcName, zoneID, domainID, common.TestAcc, vpcOfferID, common.VpcCidr4, common.NetDomain}},
+		{"EC2 VPC ID Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, common.TestAcc, common.VpcName}},
+		{"EC2 Net Create", "Create", netCommand, []string{common.NetName, zoneID, domainID, common.TestAcc, common.NetCidr4, common.EmptyCIDR6, netOfferID, common.NetDomain}},
+		{"EC2 Net Resolve", "Resolve", netCommand, []string{zoneID, domainID, common.TestAcc, common.NetName}},
 		{"EC2 Net Read", "Read", netCommand, []string{}},
 		{"EC2 Net Delete", "Delete", netCommand, []string{}},
-		{"EC2 Net Nuke", "Nuke", netCommand, []string{testAcc, zoneID, domainID}},
-		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{testAcc, zoneID, domainID}},
+		{"EC2 Net Nuke", "Nuke", netCommand, []string{common.TestAcc, zoneID, domainID}},
+		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{common.TestAcc, zoneID, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -287,12 +288,12 @@ func Test_net(t *testing.T) {
 				}
 			}
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }
 
 func Test_tmpl(t *testing.T) {
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -323,12 +324,12 @@ func Test_tmpl(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"EC2 Tmpl List", "List", tmplCommand, []string{zoneID, domainID, testAcc, tmplFilter}},
-		{"EC2 Tmpl Create", "Create", tmplCommand, []string{tmplName, zoneID, domainID, testAcc}},
-		{"EC2 Tmpl Resolve", "Resolve", tmplCommand, []string{zoneID, domainID, testAcc, tmplFilter, tmplName}},
+		{"EC2 Tmpl List", "List", tmplCommand, []string{zoneID, domainID, common.TestAcc, common.TmplFilter}},
+		{"EC2 Tmpl Create", "Create", tmplCommand, []string{common.TmplName, zoneID, domainID, common.TestAcc}},
+		{"EC2 Tmpl Resolve", "Resolve", tmplCommand, []string{zoneID, domainID, common.TestAcc, common.TmplFilter, common.TmplName}},
 		{"EC2 Tmpl Read", "Read", tmplCommand, []string{}},
 		{"EC2 Tmpl Delete", "Delete", tmplCommand, []string{}},
-		{"EC2 Tmpl Nuke", "Nuke", tmplCommand, []string{testAcc, tmplFilter, zoneID, domainID}},
+		{"EC2 Tmpl Nuke", "Nuke", tmplCommand, []string{common.TestAcc, common.TmplFilter, zoneID, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -342,11 +343,11 @@ func Test_tmpl(t *testing.T) {
 
 			// Append RUN Time params, which are NOT available in compile time
 			if d.action == "Create" {
-				req.Cmd.Params = append(req.Cmd.Params, osOfferID, tmplURL)
+				req.Cmd.Params = append(req.Cmd.Params, osOfferID, common.TmplURL)
 			}
 
 			if d.action == "Read" {
-				req.Cmd.Params = append(req.Cmd.Params, tmplID, tmplFilter)
+				req.Cmd.Params = append(req.Cmd.Params, tmplID, common.TmplFilter)
 			}
 
 			if d.action == "Delete" {
@@ -374,12 +375,12 @@ func Test_tmpl(t *testing.T) {
 				}
 			}
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }
 
 func Test_inst(t *testing.T) {
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -431,22 +432,22 @@ func Test_inst(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"EC2 Inst List", "List", instCommand, []string{zoneID, domainID, testAcc}},
-		{"EC2 SSH Create", "Create", sshCommand, []string{sshKeyName, domainID, testAcc, pubkey}},
-		{"EC2 VPC Create", "Create", vpcCommand, []string{vpcName, zoneID, domainID, testAcc, vpcOfferID, vpcCidr4, netDomain}},
-		{"EC2 VPC Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, testAcc, vpcName}},
-		{"EC2 Net Create", "Create", netCommand, []string{netName, zoneID, domainID, testAcc, netCidr4, emptyCIDR6, netOfferID, netDomain}},
-		{"EC2 Net Resolve", "Resolve", netCommand, []string{zoneID, domainID, testAcc, netName}},
-		{"EC2 Tmpl Create", "Create", tmplCommand, []string{tmplName, zoneID, domainID, testAcc}},
-		{"EC2 Tmpl Resolve", "Resolve", tmplCommand, []string{zoneID, domainID, testAcc, tmplFilter, tmplName}},
-		{"EC2 Inst Create", "Create", instCommand, []string{instName, zoneID, domainID, testAcc}},
-		{"EC2 Inst Resolve", "Resolve", instCommand, []string{zoneID, domainID, testAcc, instName}},
+		{"EC2 Inst List", "List", instCommand, []string{zoneID, domainID, common.TestAcc}},
+		{"EC2 SSH Create", "Create", sshCommand, []string{common.SshKeyName, domainID, common.TestAcc, common.Pubkey}},
+		{"EC2 VPC Create", "Create", vpcCommand, []string{common.VpcName, zoneID, domainID, common.TestAcc, vpcOfferID, common.VpcCidr4, common.NetDomain}},
+		{"EC2 VPC Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, common.TestAcc, common.VpcName}},
+		{"EC2 Net Create", "Create", netCommand, []string{common.NetName, zoneID, domainID, common.TestAcc, common.NetCidr4, common.EmptyCIDR6, netOfferID, common.NetDomain}},
+		{"EC2 Net Resolve", "Resolve", netCommand, []string{zoneID, domainID, common.TestAcc, common.NetName}},
+		{"EC2 Tmpl Create", "Create", tmplCommand, []string{common.TmplName, zoneID, domainID, common.TestAcc}},
+		{"EC2 Tmpl Resolve", "Resolve", tmplCommand, []string{zoneID, domainID, common.TestAcc, common.TmplFilter, common.TmplName}},
+		{"EC2 Inst Create", "Create", instCommand, []string{common.InstName, zoneID, domainID, common.TestAcc}},
+		{"EC2 Inst Resolve", "Resolve", instCommand, []string{zoneID, domainID, common.TestAcc, common.InstName}},
 		{"EC2 Inst Read", "Read", instCommand, []string{}},
 		{"EC2 Inst Delete", "Delete", instCommand, []string{}},
-		{"EC2 Inst Nuke", "Nuke", instCommand, []string{testAcc, zoneID, domainID}},
-		{"EC2 Tmpl Nuke", "Nuke", tmplCommand, []string{testAcc, tmplFilter, zoneID, domainID}},
-		{"EC2 Net Nuke", "Nuke", netCommand, []string{testAcc, zoneID, domainID}},
-		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{testAcc, zoneID, domainID}},
+		{"EC2 Inst Nuke", "Nuke", instCommand, []string{common.TestAcc, zoneID, domainID}},
+		{"EC2 Tmpl Nuke", "Nuke", tmplCommand, []string{common.TestAcc, common.TmplFilter, zoneID, domainID}},
+		{"EC2 Net Nuke", "Nuke", netCommand, []string{common.TestAcc, zoneID, domainID}},
+		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{common.TestAcc, zoneID, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -466,23 +467,23 @@ func Test_inst(t *testing.T) {
 				}
 
 				if d.command == tmplCommand {
-					req.Cmd.Params = append(req.Cmd.Params, osOfferID, tmplURL)
+					req.Cmd.Params = append(req.Cmd.Params, osOfferID, common.TmplURL)
 				}
 
 				if d.command == instCommand {
-					req.Cmd.Params = append(req.Cmd.Params, tmplID, instOfferID, sshKeyName, fmt.Sprint(diskSizeGB), fmt.Sprintf("net::%s", netID))
+					req.Cmd.Params = append(req.Cmd.Params, tmplID, instOfferID, common.SshKeyName, fmt.Sprint(common.DiskSizeGB), fmt.Sprintf("net::%s", netID))
 				}
 			}
 
 			if d.action == "Resolve" {
 				if d.command == instCommand {
-					req.Cmd.Params = append(req.Cmd.Params, tmplID, instName)
+					req.Cmd.Params = append(req.Cmd.Params, tmplID, common.InstName)
 				}
 			}
 
 			if d.action == "Read" {
 				if d.command == tmplCommand {
-					req.Cmd.Params = append(req.Cmd.Params, tmplID, tmplFilter)
+					req.Cmd.Params = append(req.Cmd.Params, tmplID, common.TmplFilter)
 				}
 				if d.command == instCommand {
 					req.Cmd.Params = append(req.Cmd.Params, instID)
@@ -545,12 +546,12 @@ func Test_inst(t *testing.T) {
 				}
 			}
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }
 
 func Test_offerings(t *testing.T) {
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -566,12 +567,12 @@ func Test_offerings(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"EC2 Zone ID", "Resolve", zoneCommand, []string{testZone}},
-		{"EC2 Domain ID", "Resolve", domCommand, []string{testDomain}},
-		{"EC2 VPC Offer ID", "Resolve", vpcOfferCommand, []string{vpcOffer}},
-		{"EC2 Net Offer ID", "Resolve", netOfferCommand, []string{netOffer}},
-		{"EC2 OS Offer ID", "Resolve", osOfferCommand, []string{osOffer}},
-		{"EC2 Inst Offer ID", "Resolve", instOfferCommand, []string{instOffer}},
+		{"EC2 Zone ID", "Resolve", zoneCommand, []string{common.TestZone}},
+		{"EC2 Domain ID", "Resolve", domCommand, []string{common.TestDomain}},
+		{"EC2 VPC Offer ID", "Resolve", vpcOfferCommand, []string{common.VpcOffer}},
+		{"EC2 Net Offer ID", "Resolve", netOfferCommand, []string{common.NetOffer}},
+		{"EC2 OS Offer ID", "Resolve", osOfferCommand, []string{common.OsOffer}},
+		{"EC2 Inst Offer ID", "Resolve", instOfferCommand, []string{common.InstOffer}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -645,12 +646,12 @@ func Test_offerings(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }
 
 func Test_acl(t *testing.T) {
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -685,15 +686,15 @@ func Test_acl(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"EC2 VPC Create", "Create", vpcCommand, []string{vpcName, zoneID, domainID, testAcc, vpcOfferID, vpcCidr4, netDomain}},
-		{"EC2 VPC ID Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, testAcc, vpcName}},
-		{"EC2 ACL Create", "Create", aclCommand, []string{aclName, aclDescr}},
-		{"EC2 ACL	Resolve", "Resolve", aclCommand, []string{domainID, testAcc}},
-		{"EC2 ACL List", "List", aclCommand, []string{domainID, testAcc}},
+		{"EC2 VPC Create", "Create", vpcCommand, []string{common.VpcName, zoneID, domainID, common.TestAcc, vpcOfferID, common.VpcCidr4, common.NetDomain}},
+		{"EC2 VPC ID Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, common.TestAcc, common.VpcName}},
+		{"EC2 ACL Create", "Create", aclCommand, []string{common.AclName, common.AclDescr}},
+		{"EC2 ACL	Resolve", "Resolve", aclCommand, []string{domainID, common.TestAcc}},
+		{"EC2 ACL List", "List", aclCommand, []string{domainID, common.TestAcc}},
 		{"EC2 ACL Read", "Read", aclCommand, []string{}},
 		{"EC2 ACL Delete", "Delete", aclCommand, []string{}},
-		{"EC2 ACL Nuke", "Nuke", aclCommand, []string{testAcc, domainID}},
-		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{testAcc, zoneID, domainID}},
+		{"EC2 ACL Nuke", "Nuke", aclCommand, []string{common.TestAcc, domainID}},
+		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{common.TestAcc, zoneID, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -714,7 +715,7 @@ func Test_acl(t *testing.T) {
 
 			if d.action == "Resolve" {
 				if d.command == aclCommand {
-					req.Cmd.Params = append(req.Cmd.Params, vpcID, aclName)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID, common.AclName)
 				}
 			}
 
@@ -776,12 +777,12 @@ func Test_acl(t *testing.T) {
 				}
 			}
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }
 
 func Test_aclrule(t *testing.T) {
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -822,17 +823,17 @@ func Test_aclrule(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"EC2 VPC Create", "Create", vpcCommand, []string{vpcName, zoneID, domainID, testAcc, vpcOfferID, vpcCidr4, netDomain}},
-		{"EC2 VPC ID Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, testAcc, vpcName}},
-		{"EC2 Net Create", "Create", netCommand, []string{netName, zoneID, domainID, testAcc, netCidr4, emptyCIDR6, netOfferID, netDomain}},
-		{"EC2 Net Resolve", "Resolve", netCommand, []string{zoneID, domainID, testAcc, netName}},
-		{"EC2 ACL Create", "Create", aclCommand, []string{aclName, aclDescr}},
-		{"EC2 ACL	Resolve", "Resolve", aclCommand, []string{domainID, testAcc}},
-		{"EC2 ACL	Rule", "Create", aclrCommand, []string{aclrDesc, aclrAction, aclrProto, aclrTraffic, aclrCIDR4, fmt.Sprint(aclrPortStart), fmt.Sprint(aclrPortEnd)}},
-		{"EC2 ACL Rule List", "List", aclrCommand, []string{domainID, testAcc}},
-		{"EC2 ACL Nuke", "Nuke", aclCommand, []string{testAcc, domainID}},
-		{"EC2 Net Nuke", "Nuke", netCommand, []string{testAcc, zoneID, domainID}},
-		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{testAcc, zoneID, domainID}},
+		{"EC2 VPC Create", "Create", vpcCommand, []string{common.VpcName, zoneID, domainID, common.TestAcc, vpcOfferID, common.VpcCidr4, common.NetDomain}},
+		{"EC2 VPC ID Resolve", "Resolve", vpcCommand, []string{zoneID, domainID, common.TestAcc, common.VpcName}},
+		{"EC2 Net Create", "Create", netCommand, []string{common.NetName, zoneID, domainID, common.TestAcc, common.NetCidr4, common.EmptyCIDR6, netOfferID, common.NetDomain}},
+		{"EC2 Net Resolve", "Resolve", netCommand, []string{zoneID, domainID, common.TestAcc, common.NetName}},
+		{"EC2 ACL Create", "Create", aclCommand, []string{common.AclName, common.AclDescr}},
+		{"EC2 ACL	Resolve", "Resolve", aclCommand, []string{domainID, common.TestAcc}},
+		{"EC2 ACL	Rule", "Create", aclrCommand, []string{common.AclrDesc, common.AclrAction, common.AclrProto, common.AclrTraffic, common.AclrCIDR4, fmt.Sprint(common.PortStart), fmt.Sprint(common.PortEnd)}},
+		{"EC2 ACL Rule List", "List", aclrCommand, []string{domainID, common.TestAcc}},
+		{"EC2 ACL Nuke", "Nuke", aclCommand, []string{common.TestAcc, domainID}},
+		{"EC2 Net Nuke", "Nuke", netCommand, []string{common.TestAcc, zoneID, domainID}},
+		{"EC2 VPC Nuke", "Nuke", vpcCommand, []string{common.TestAcc, zoneID, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -862,7 +863,7 @@ func Test_aclrule(t *testing.T) {
 
 			if d.action == "Resolve" {
 				if d.command == aclCommand {
-					req.Cmd.Params = append(req.Cmd.Params, vpcID, aclName)
+					req.Cmd.Params = append(req.Cmd.Params, vpcID, common.AclName)
 				}
 			}
 
@@ -938,6 +939,6 @@ func Test_aclrule(t *testing.T) {
 				}
 			}
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }

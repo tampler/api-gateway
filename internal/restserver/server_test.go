@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/buger/jsonparser"
+	"github.com/neurodyne-web-services/api-gateway/internal/common"
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/utils"
 	cc "github.com/neurodyne-web-services/nws-sdk-go/services/cloudcontrol"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func Test_sess(t *testing.T) {
 	// os.Setenv("NATS_USER", "local")
 	// os.Setenv("NATS_PASS", "vsO2TcFwkmQ2p3eiOl3HcD7NVWEjvRI4")
 
-	port := rand.Intn(portEnd-portStart) + portStart
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 
 	// Launch Server
 	server, err := MakeAPIServerMock()
@@ -41,7 +42,7 @@ func Test_sess(t *testing.T) {
 
 	domainID = string(tmp.Value())
 
-	now := time.Now().Format(timeFormat)
+	now := time.Now().Format(common.TimeFormat)
 
 	data := []struct {
 		name    string
@@ -49,7 +50,7 @@ func Test_sess(t *testing.T) {
 		command string
 		params  []string
 	}{
-		{"Session Create", "Create", sessCommand, []string{testZone, zoneID, testDomain, domainID, account, netDomain, now, userID}},
+		{"Session Create", "Create", sessCommand, []string{common.TestZone, zoneID, common.TestDomain, domainID, account, common.NetDomain, now, userID}},
 		{"Session Read", "Read", sessCommand, []string{userID}},
 		{"Session Delete", "Delete", sessCommand, []string{userID}},
 	}
@@ -77,7 +78,7 @@ func Test_sess(t *testing.T) {
 
 				readZone, err := jsonparser.GetString(data, "zone", "name")
 				assert.NoError(t, err)
-				assert.Equal(t, testZone, readZone)
+				assert.Equal(t, common.TestZone, readZone)
 
 				readZoneID, err := jsonparser.GetString(data, "zone", "id")
 				assert.NoError(t, err)
@@ -85,7 +86,7 @@ func Test_sess(t *testing.T) {
 
 				readDomain, err := jsonparser.GetString(data, "domain", "name")
 				assert.NoError(t, err)
-				assert.Equal(t, testDomain, readDomain)
+				assert.Equal(t, common.TestDomain, readDomain)
 
 				readDomainID, err := jsonparser.GetString(data, "domain", "id")
 				assert.NoError(t, err)
@@ -96,6 +97,6 @@ func Test_sess(t *testing.T) {
 				assert.Equal(t, account, readAccount)
 			}
 		})
-		time.Sleep(sleepTime * time.Millisecond)
+		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }

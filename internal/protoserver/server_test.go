@@ -7,24 +7,25 @@ import (
 	"time"
 
 	"github.com/buger/jsonparser"
-	aj "github.com/choria-io/asyncjobs"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/google/uuid"
 	"github.com/neurodyne-web-services/api-gateway/internal/common"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
-	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 )
 
-const (
-	CONFIG_PATH = "../../configs"
-	CONFIG_NAME = "app"
-)
+func Test_ssh(t *testing.T) {
 
-func Test_unary(t *testing.T) {
+	// Connect to NATS
+	nc, err := natstool.MakeNatsConnect()
+	assert.NoError(t, err)
+
+	stor, err := MakeStorageServer(nc)
+	assert.NoError(t, err)
+
 	// Build a global config
 	var cfg config.AppConfig
 
@@ -36,44 +37,8 @@ func Test_unary(t *testing.T) {
 	defer logger.Sync()
 	zl := logger.Sugar()
 
-	// Connect to NATS
-	nc, err := natstool.MakeNatsConnect()
+	app, err := buildProtoServer(nc, cfg, zl)
 	assert.NoError(t, err)
-
-	// Input queue
-	pingClient, err := aj.NewClient(
-		aj.NatsConn(nc),
-		aj.BindWorkQueue(cfg.Ajc.Ingress.Name),
-		aj.ClientConcurrency(cfg.Ajc.Ingress.Concurrency),
-		aj.PrometheusListenPort(cfg.Ajc.Ingress.MetricsPort),
-		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
-
-	assert.NoError(t, err)
-
-	// Output queue
-	pongClient, err := aj.NewClient(
-		aj.NatsConn(nc),
-		aj.BindWorkQueue(cfg.Ajc.Egress.Name),
-		aj.ClientConcurrency(cfg.Ajc.Egress.Concurrency),
-		aj.PrometheusListenPort(cfg.Ajc.Egress.MetricsPort),
-		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
-
-	assert.NoError(t, err)
-
-	// Create queue routers
-	pingRouter := aj.NewTaskRouter()
-	pongRouter := aj.NewTaskRouter()
-
-	pingMgr := worker.MakeQueueManager(pingClient, pingRouter)
-	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
-
-	pub := worker.MakePublisher(pongMgr, zl, map[uuid.UUID]worker.Subscriber{})
-	pub.AddHandlers(cfg.Ajc.Egress.Topic)
-
-	stor, err := MakeStorageServer(nc, cfg)
-	assert.NoError(t, err)
-
-	app := MakeProtoServer(&cfg, zl, pingMgr, pongMgr, &pub)
 
 	tmp, err := stor.kv.Get("domainID")
 	assert.NoError(t, err)
@@ -87,12 +52,12 @@ func Test_unary(t *testing.T) {
 		action string
 		params []string
 	}{
-		{"EC2 SSH List", "List", []string{domainID, common.TestAcc}},
-		{"EC2 SSH Create", "Create", []string{common.SshKeyName, domainID, common.TestAcc, common.Pubkey}},
-		{"EC2 SSH Resolve", "Resolve", []string{domainID, common.TestAcc, common.SshKeyName}},
-		{"EC2 SSH Read", "Read", []string{}},
-		{"EC2 SSH Delete", "Delete", []string{common.SshKeyName, domainID, common.TestAcc}},
-		{"EC2 SSH Nuke", "Nuke", []string{common.TestAcc, domainID}},
+		{"EC2 SSH", "List", []string{domainID, common.TestAcc}},
+		{"EC2 SSH", "Create", []string{common.SshKeyName, domainID, common.TestAcc, common.Pubkey}},
+		{"EC2 SSH", "Resolve", []string{domainID, common.TestAcc, common.SshKeyName}},
+		{"EC2 SSH", "Read", []string{}},
+		{"EC2 SSH", "Delete", []string{common.SshKeyName, domainID, common.TestAcc}},
+		{"EC2 SSH", "Nuke", []string{common.TestAcc, domainID}},
 	}
 	for _, d := range data {
 		t.Run(d.name, func(t *testing.T) {
@@ -121,6 +86,61 @@ func Test_unary(t *testing.T) {
 				sshKeyID, err = jsonparser.GetString(res.Data, "id", "id")
 				assert.NoError(t, err)
 			}
+		})
+		time.Sleep(common.SleepTime * time.Millisecond)
+	}
+}
+
+func Test_failer(t *testing.T) {
+
+	// Connect to NATS
+	nc, err := natstool.MakeNatsConnect()
+	assert.NoError(t, err)
+
+	// Build a global config
+	var cfg config.AppConfig
+
+	if err := cfg.AppInit(CONFIG_NAME, CONFIG_PATH); err != nil {
+		log.Fatalf("Config failed %s", err.Error())
+	}
+
+	logger, _ := logging.MakeLogger(cfg.Log.Verbosity, cfg.Log.Output)
+	defer logger.Sync()
+	zl := logger.Sugar()
+
+	app, err := buildProtoServer(nc, cfg, zl)
+	assert.NoError(t, err)
+
+	data := []struct {
+		name   string
+		action string
+		params []string
+	}{
+		{"Failer BlackHole", "List", []string{}},
+		// {"EC2 SSH Create", "Create", []string{}},
+		// {"EC2 SSH Resolve", "Resolve", []string{}},
+		// {"EC2 SSH Read", "Read", []string{}},
+		// {"EC2 SSH Delete", "Delete", []string{}},
+		// {"EC2 SSH Nuke", "Nuke", []string{}},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+
+			cmd := cc.APICommand{
+				Service:  "Failer",
+				Resource: "BlackHole",
+				Action:   d.action,
+				Params:   d.params,
+			}
+
+			req := cc.APIRequest{
+				JobID: uuid.NewString(),
+				Cmd:   &cmd,
+			}
+
+			_, err := app.UnaryCall(context.Background(), &req)
+			assert.NoError(t, err)
+
 		})
 		time.Sleep(common.SleepTime * time.Millisecond)
 	}

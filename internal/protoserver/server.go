@@ -79,6 +79,7 @@ func (s *protoServer) UnaryCall(ctx context.Context, req *cc.APIRequest) (*cc.AP
 
 	case <-time.After(time.Duration(s.Cfg.Sdk.JobTime) * time.Second):
 		s.Zl.Errorf("FAIL: request timed out %v", req)
+		return nil, status.Errorf(codes.Aborted, "Timed out")
 
 	case <-done:
 		if len(observ.Err) > 0 {

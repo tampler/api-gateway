@@ -80,6 +80,38 @@ func Test_ssh(t *testing.T) {
 	}
 }
 
+func Test_failer(t *testing.T) {
+	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
+
+	// Launch Server
+	server, err := MakeAPIServerMock()
+	assert.NoErrorf(t, err, "Failed to create a server")
+
+	go runServer(server.echo, port)
+
+	data := []struct {
+		name    string
+		action  string
+		command string
+		params  []string
+	}{
+		{"EC2 Zone", "Read", "NWS::Failer::BlackHole", []string{}},
+	}
+	for _, d := range data {
+		t.Run(d.name, func(t *testing.T) {
+			req, err := cc.MakePlainClient(getEndpoint(port))
+			assert.NoError(t, err)
+
+			req.Cmd.Action = d.action
+			req.Cmd.Command = d.command
+			req.Cmd.Params = d.params
+
+			res, err := req.MakeRequest()
+			assert.Equal(t, http.StatusInternalServerError, res.StatusCode())
+		})
+	}
+}
+
 func TestDS_domain(t *testing.T) {
 	port := rand.Intn(common.PortEnd-common.PortStart) + common.PortStart
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/neurodyne-web-services/nws-sdk-go/pkg/utils"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/ec2"
+	"github.com/neurodyne-web-services/nws-sdk-go/services/failer"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/session"
 )
 
@@ -17,8 +18,9 @@ const (
 func AvailableServices() []string {
 	out := make([]string, defaultSliceLen)
 
-	out = append(out, "EC2")
+	out = append(out, "Failer")
 	out = append(out, "Session")
+	out = append(out, "EC2")
 
 	return out
 }
@@ -30,6 +32,7 @@ func AvailableResources() []string {
 	// out = append(out, s3.AvailableResources()...)
 	out = append(out, ec2.AllResources...)
 	out = append(out, session.AllResources...)
+	out = append(out, failer.AllResources...)
 
 	return out
 }

@@ -38,14 +38,14 @@ type APIServer struct {
 }
 
 // MakeAPIServer - APIServer factory
-func MakeAPIServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong QueueManager) *APIServer {
+func MakeAPIServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong QueueManager) APIServer {
 	srv := APIServer{
 		Zl:   z,
 		Cfg:  c,
 		Ping: ping,
 		Pong: pong,
 	}
-	return &srv
+	return srv
 }
 
 // Publisher - bus publisher

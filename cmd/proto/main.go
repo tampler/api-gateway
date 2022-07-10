@@ -95,7 +95,7 @@ func main() {
 
 	s := grpc.NewServer(*opts...)
 
-	cc.RegisterCloudControlServiceServer(s, protoserver.MakeProtoServer(&cfg, zl, pingMgr, pongMgr, pub))
+	cc.RegisterCloudControlServiceServer(s, protoserver.MakeProtoServer(&cfg, zl, pingMgr, pongMgr, &pub))
 
 	showDebugInfo(zl.Desugar(), &cfg)
 	if err := s.Serve(lis); err != nil {

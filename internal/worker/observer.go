@@ -39,14 +39,14 @@ func (p *Publisher) AddHandlers(topic string) error {
 }
 
 func (p *Publisher) AddObserver(id uuid.UUID, sub Subscriber) {
-	// p.zl.Debugf("Adding observer: %s", id)
+	// p.Zl.Debugf("Adding observer: %s", id.String())
 	p.Mutex.Lock()
 	defer p.Mutex.Unlock()
 	p.Sub[id] = sub
 }
 
 func (p *Publisher) RemoveObserver(id uuid.UUID) {
-	// p.zl.Debugf("Removing observer: %s", id)
+	// p.Zl.Debugf("Removing observer: %s", id)
 	p.Mutex.Lock()
 	defer p.Mutex.Unlock()
 
@@ -54,7 +54,7 @@ func (p *Publisher) RemoveObserver(id uuid.UUID) {
 }
 
 func (p *Publisher) NotifyObserver(id uuid.UUID, e BusEvent) error {
-	// p.zl.Debugf("Notifying observer: %s", id)
+	// p.Zl.Debugf("Notifying observer: %s", id)
 	p.Mutex.Lock()
 	defer p.Mutex.Unlock()
 

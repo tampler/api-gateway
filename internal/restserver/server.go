@@ -26,7 +26,7 @@ type restServer struct {
 // MakeRestServer - APIServer factory
 func MakeRestServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong worker.QueueManager) *restServer {
 	api := worker.MakeAPIServer(c, z, ping, pong)
-	return &restServer{*api}
+	return &restServer{api}
 }
 
 func (s *restServer) GetMetrics(ctx echo.Context) error {

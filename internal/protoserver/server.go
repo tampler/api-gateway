@@ -20,15 +20,13 @@ import (
 type protoServer struct {
 	cc.UnimplementedCloudControlServiceServer
 	worker.APIServer
-	pub worker.Publisher
+	pub *worker.Publisher
 }
 
-func MakeProtoServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong worker.QueueManager, pub worker.Publisher) *protoServer {
+func MakeProtoServer(c *config.AppConfig, z *zap.SugaredLogger, ping, pong worker.QueueManager, pub *worker.Publisher) *protoServer {
 	api := worker.MakeAPIServer(c, z, ping, pong)
 	return &protoServer{
-		cc.UnimplementedCloudControlServiceServer{},
-		*api,
-		pub,
+		cc.UnimplementedCloudControlServiceServer{}, api, pub,
 	}
 }
 

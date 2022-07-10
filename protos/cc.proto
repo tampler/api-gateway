@@ -15,12 +15,12 @@ message APICommand {
 }
 
 message APIRequest {
-  APICommand cmd = 1;
-  string jobID = 2;
+  string jobID = 1;
+  APICommand cmd = 2;
 }
 
 message APIResponse {
-  bytes   data = 1;
-  string  err = 2;
-  string  jobID = 3;
+  string  jobID = 1;
+  bytes   data = 2;
+  string  err = 3;
 }

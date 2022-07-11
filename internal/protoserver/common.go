@@ -44,8 +44,8 @@ func MakeStorageServer(nc *nats.Conn) (storageServer, error) {
 	return serv, nil
 }
 
-// buildProtoServer - generates a protobuf server with NATS support
-func buildProtoServer(ctx context.Context, nc *nats.Conn, cfg config.AppConfig, zl *zap.SugaredLogger) (*protoServer, error) {
+// BuildProtoServer - generates a protobuf server with NATS support
+func BuildProtoServer(ctx context.Context, nc *nats.Conn, cfg config.AppConfig, zl *zap.SugaredLogger) (*protoServer, error) {
 
 	// Input queue
 	pingClient, err := aj.NewClient(

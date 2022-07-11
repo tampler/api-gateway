@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"testing"
-	"time"
 
 	"github.com/buger/jsonparser"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +36,7 @@ func Test_ssh(t *testing.T) {
 	defer logger.Sync()
 	zl := logger.Sugar()
 
-	app, err := buildProtoServer(context.Background(), nc, cfg, zl)
+	app, err := BuildProtoServer(context.Background(), nc, cfg, zl)
 	assert.NoError(t, err)
 
 	tmp, err := stor.kv.Get("domainID")
@@ -87,7 +86,6 @@ func Test_ssh(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
-		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }
 
@@ -108,7 +106,7 @@ func Test_failer(t *testing.T) {
 	defer logger.Sync()
 	zl := logger.Sugar()
 
-	app, err := buildProtoServer(context.Background(), nc, cfg, zl)
+	app, err := BuildProtoServer(context.Background(), nc, cfg, zl)
 	assert.NoError(t, err)
 
 	data := []struct {
@@ -142,6 +140,5 @@ func Test_failer(t *testing.T) {
 			assert.NoError(t, err)
 
 		})
-		time.Sleep(common.SleepTime * time.Millisecond)
 	}
 }

@@ -8,13 +8,10 @@ import (
 	"net"
 	"os"
 
-	aj "github.com/choria-io/asyncjobs"
-	"github.com/google/uuid"
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/logging"
 	"github.com/neurodyne-web-services/api-gateway/internal/protoserver"
 	"github.com/neurodyne-web-services/api-gateway/internal/token"
-	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"
 	"github.com/neurodyne-web-services/nws-sdk-go/services/natstool"
 	"go.uber.org/zap"
@@ -28,6 +25,7 @@ const (
 )
 
 func main() {
+	ctx := context.Background()
 
 	// Build a global config
 	var cfg config.AppConfig
@@ -47,41 +45,11 @@ func main() {
 		zl.Fatalf("NATS connect failed %s \n", err.Error())
 	}
 
-	// Input queue
-	pingClient, err := aj.NewClient(
-		aj.NatsConn(nc),
-		aj.BindWorkQueue(cfg.Ajc.Ingress.Name),
-		aj.ClientConcurrency(cfg.Ajc.Ingress.Concurrency),
-		aj.PrometheusListenPort(cfg.Ajc.Ingress.MetricsPort),
-		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
-
+	// Proto server with Nats infra
+	server, err := protoserver.BuildProtoServer(ctx, nc, cfg, zl)
 	if err != nil {
 		zl.Fatal(err)
 	}
-
-	// Output queue
-	pongClient, err := aj.NewClient(
-		aj.NatsConn(nc),
-		aj.BindWorkQueue(cfg.Ajc.Egress.Name),
-		aj.ClientConcurrency(cfg.Ajc.Egress.Concurrency),
-		aj.PrometheusListenPort(cfg.Ajc.Egress.MetricsPort),
-		aj.RetryBackoffPolicy(aj.RetryLinearOneMinute))
-
-	if err != nil {
-		zl.Fatal(err)
-	}
-
-	// Create queue routers
-	pingRouter := aj.NewTaskRouter()
-	pongRouter := aj.NewTaskRouter()
-
-	pingMgr := worker.MakeQueueManager(pingClient, pingRouter)
-	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
-
-	ctx := context.Background()
-
-	pub := worker.MakePublisher(pongMgr, zl, map[uuid.UUID]worker.Subscriber{})
-	pub.AddHandlers(ctx, cfg.Ajc.Egress.Topic)
 
 	// GRPC server
 	var opts *[]grpc.ServerOption
@@ -98,7 +66,7 @@ func main() {
 
 	s := grpc.NewServer(*opts...)
 
-	cc.RegisterCloudControlServiceServer(s, protoserver.MakeProtoServer(&cfg, zl, pingMgr, pongMgr, &pub))
+	cc.RegisterCloudControlServiceServer(s, server)
 
 	showDebugInfo(zl.Desugar(), &cfg)
 	if err := s.Serve(lis); err != nil {

@@ -84,3 +84,5 @@ require (
 )
 
 replace github.com/neurodyne-web-services/nws-sdk-go => /home/bku/work/go/src/github.com/neurodyne-web-services/nws-sdk-go
+
+replace github.com/choria-io/asyncjobs => /home/bku/work/go/src/github.com/drev74/asyncjobs

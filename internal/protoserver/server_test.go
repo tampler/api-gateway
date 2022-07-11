@@ -37,7 +37,7 @@ func Test_ssh(t *testing.T) {
 	defer logger.Sync()
 	zl := logger.Sugar()
 
-	app, err := buildProtoServer(nc, cfg, zl)
+	app, err := buildProtoServer(context.Background(), nc, cfg, zl)
 	assert.NoError(t, err)
 
 	tmp, err := stor.kv.Get("domainID")
@@ -52,11 +52,11 @@ func Test_ssh(t *testing.T) {
 		action string
 		params []string
 	}{
-		{"EC2 SSH", "List", []string{domainID, common.TestAcc}},
-		{"EC2 SSH", "Create", []string{common.SshKeyName, domainID, common.TestAcc, common.Pubkey}},
-		{"EC2 SSH", "Resolve", []string{domainID, common.TestAcc, common.SshKeyName}},
-		{"EC2 SSH", "Read", []string{}},
-		{"EC2 SSH", "Delete", []string{common.SshKeyName, domainID, common.TestAcc}},
+		// {"EC2 SSH", "List", []string{domainID, common.TestAcc}},
+		// {"EC2 SSH", "Create", []string{common.SshKeyName, domainID, common.TestAcc, common.Pubkey}},
+		// {"EC2 SSH", "Resolve", []string{domainID, common.TestAcc, common.SshKeyName}},
+		// {"EC2 SSH", "Read", []string{}},
+		// {"EC2 SSH", "Delete", []string{common.SshKeyName, domainID, common.TestAcc}},
 		{"EC2 SSH", "Nuke", []string{common.TestAcc, domainID}},
 	}
 	for _, d := range data {
@@ -108,7 +108,7 @@ func Test_failer(t *testing.T) {
 	defer logger.Sync()
 	zl := logger.Sugar()
 
-	app, err := buildProtoServer(nc, cfg, zl)
+	app, err := buildProtoServer(context.Background(), nc, cfg, zl)
 	assert.NoError(t, err)
 
 	data := []struct {

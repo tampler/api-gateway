@@ -12,7 +12,7 @@ import (
 )
 
 // AddHandlers - add AJC queue handlers for a given topic
-func (p *Publisher) AddHandlers(topic string) error {
+func (p *Publisher) AddHandlers(ctx context.Context, topic string) error {
 
 	err := p.Pong.Router.HandleFunc(topic, func(ctx context.Context, _ aj.Logger, t *aj.Task) (interface{}, error) {
 
@@ -42,7 +42,7 @@ func (p *Publisher) AddHandlers(topic string) error {
 	}
 
 	// Execute PONG queue
-	go p.Pong.Run(context.Background())
+	go p.Pong.Run(ctx)
 
 	return nil
 }

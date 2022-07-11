@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -102,9 +103,11 @@ func main() {
 	// This is how you set up a basic Echo router
 	e := echo.New()
 
+	ctx := context.Background()
+
 	pub := worker.MakePublisher(pongMgr, zl, map[uuid.UUID]worker.Subscriber{})
 
-	pub.AddHandlers(cfg.Ajc.Egress.Topic)
+	pub.AddHandlers(ctx, cfg.Ajc.Egress.Topic)
 
 	// Add custom context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {

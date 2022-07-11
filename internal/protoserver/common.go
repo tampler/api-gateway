@@ -9,6 +9,7 @@ import (
 	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/internal/worker"
 	"go.uber.org/zap"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -44,7 +45,7 @@ func MakeStorageServer(nc *nats.Conn) (storageServer, error) {
 }
 
 // buildProtoServer - generates a protobuf server with NATS support
-func buildProtoServer(nc *nats.Conn, cfg config.AppConfig, zl *zap.SugaredLogger) (*protoServer, error) {
+func buildProtoServer(ctx context.Context, nc *nats.Conn, cfg config.AppConfig, zl *zap.SugaredLogger) (*protoServer, error) {
 
 	// Input queue
 	pingClient, err := aj.NewClient(
@@ -80,7 +81,7 @@ func buildProtoServer(nc *nats.Conn, cfg config.AppConfig, zl *zap.SugaredLogger
 	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
 
 	pub := worker.MakePublisher(pongMgr, zl, map[uuid.UUID]worker.Subscriber{})
-	pub.AddHandlers(cfg.Ajc.Egress.Topic)
+	pub.AddHandlers(ctx, cfg.Ajc.Egress.Topic)
 
 	return MakeProtoServer(&cfg, zl, pingMgr, pongMgr, &pub), nil
 }

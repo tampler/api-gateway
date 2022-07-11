@@ -1,6 +1,7 @@
 package restserver
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -95,7 +96,7 @@ func MakeAPIServerMock() (testServer, error) {
 		zl.Fatal()
 	}
 
-	pub.AddHandlers(cfg.Ajc.Egress.Topic)
+	pub.AddHandlers(context.Background(), cfg.Ajc.Egress.Topic)
 
 	// Add custom context
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {

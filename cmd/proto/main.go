@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -77,8 +78,10 @@ func main() {
 	pingMgr := worker.MakeQueueManager(pingClient, pingRouter)
 	pongMgr := worker.MakeQueueManager(pongClient, pongRouter)
 
+	ctx := context.Background()
+
 	pub := worker.MakePublisher(pongMgr, zl, map[uuid.UUID]worker.Subscriber{})
-	pub.AddHandlers(cfg.Ajc.Egress.Topic)
+	pub.AddHandlers(ctx, cfg.Ajc.Egress.Topic)
 
 	// GRPC server
 	var opts *[]grpc.ServerOption

@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -59,14 +60,23 @@ func main() {
 		zl.Fatal(err)
 	}
 
+	// Register GRPC server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Grpc.Port))
 	if err != nil {
 		zl.Fatal(err)
 	}
 
 	s := grpc.NewServer(*opts...)
-
 	cc.RegisterCloudControlServiceServer(s, server)
+
+	// Register reflection service on gRPC server if Reflection enabled
+	// Do NOT use in PROD !!!
+	if cfg.Grpc.ReflectEnabled {
+		reflection.Register(s)
+		if err := s.Serve(lis); err != nil {
+			zl.Fatal(err)
+		}
+	}
 
 	showDebugInfo(zl.Desugar(), &cfg)
 	if err := s.Serve(lis); err != nil {
@@ -77,7 +87,7 @@ func main() {
 // buildServerOpts - returns a GRPC server options
 func buildServerOpts(cfg *config.AppConfig) (*[]grpc.ServerOption, error) {
 
-	if !cfg.Grpc.AuthEnabled {
+	if !cfg.Grpc.TLSEnabled {
 		opts := []grpc.ServerOption{}
 		return &opts, nil
 	}
@@ -99,8 +109,9 @@ func buildServerOpts(cfg *config.AppConfig) (*[]grpc.ServerOption, error) {
 
 // showDebugInfo - this prints envs to ease deployment and debug
 func showDebugInfo(zl *zap.Logger, cfg *config.AppConfig) {
-	zl.Info("NATS URL: ", zap.String("NATS_URL", os.Getenv("NATS_URL")))
 	zl.Info("GRPC URL: ", zap.Int("localhost", cfg.Grpc.Port))
-	zl.Info("GRPC Secure: ", zap.Bool("auth", cfg.Grpc.AuthEnabled))
+	zl.Info("NATS URL: ", zap.String("NATS_URL", os.Getenv("NATS_URL")))
+	zl.Info("GRPC Auth: ", zap.Bool("TLS", cfg.Grpc.TLSEnabled))
+	zl.Info("GRPC Reflect: ", zap.Bool("Reflection", cfg.Grpc.ReflectEnabled))
 	zl.Info("Job timeout:", zap.Int("timeout, sec", cfg.Sdk.JobTime))
 }

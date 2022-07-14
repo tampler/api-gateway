@@ -23,10 +23,11 @@ type httpConfig struct {
 
 // grpcConfig - config for GRPC server
 type grpcConfig struct {
-	AuthEnabled bool
-	Port        int
-	CertFile    string
-	KeyFile     string
+	TLSEnabled     bool
+	ReflectEnabled bool
+	Port           int
+	CertFile       string
+	KeyFile        string
 }
 
 // debugConfig - config for debugging
@@ -78,10 +79,9 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 		return fmt.Errorf("Failed to read config file")
 	}
 
-	// auth
-	cfg.Grpc.AuthEnabled = viper.GetBool("auth.auth_enabled")
-
 	// grpc
+	cfg.Grpc.TLSEnabled = viper.GetBool("grpc.tls_enabled")
+	cfg.Grpc.ReflectEnabled = viper.GetBool("grpc.allow_reflection")
 	cfg.Grpc.Port = viper.GetInt("grpc.port")
 	cfg.Grpc.CertFile = viper.GetString("grpc.cert_file")
 	cfg.Grpc.KeyFile = viper.GetString("grpc.key_file")

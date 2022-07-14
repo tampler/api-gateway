@@ -1,11 +1,10 @@
 # Full app config
-[auth]
-auth_enabled = false
-
 [grpc]
-cert_file = "./certs/public.crt"
-key_file = "./certs/private.key"
+allow_reflection = false
+cert_file = "./certs/server.pem"
+key_file = "./certs/server.key"
 port = 50051
+tls_enabled = true
 
 [http]
 auth_file = "/tmp/app.json"
@@ -13,7 +12,7 @@ pem_file = "/tmp/token_jwt_key.pem"
 port = 8084
 
 body_limit = "4K"
-max_rps = 20
+max_rps = 100
 
 allow_timeout = false
 timeout = 300
@@ -39,7 +38,7 @@ metrics_port = 8090
 name = "PING"
 
 [ajc.egress]
-metrics_port = 8091
+metrics_port = 0
 name = "PONG"
 
 [sdk]

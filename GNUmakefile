@@ -16,9 +16,10 @@ vet:
 	fi
 
 cert:
-	@openssl genrsa -out ${CERTS}/private.key 4096
-	@openssl req -new -x509 -sha256 -days 1825 -addext "subjectAltName = DNS:localhost" \
-	-key ${CERTS}/private.key -out ${CERTS}/public.crt
+	# @openssl genrsa -out ${CERTS}/private.key 4096
+	# @openssl req -new -x509 -sha256 -days 1825 -addext "subjectAltName = DNS:localhost" \
+	# -key ${CERTS}/private.key -out ${CERTS}/public.crt
+	@./scripts/certgen.sh
 
 tidy:
 	@ go mod tidy --compat=1.18

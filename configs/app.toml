@@ -1,10 +1,10 @@
 # Full app config
 [grpc]
+addr = "192.168.1.93:50051"
 allow_reflection = false
 cert_file = "./certs/server.pem"
 key_file = "./certs/server.key"
-port = 50051
-tls_enabled = true
+tls_enabled = false
 
 [http]
 auth_file = "/tmp/app.json"

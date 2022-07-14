@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -61,7 +60,7 @@ func main() {
 	}
 
 	// Register GRPC server
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Grpc.Port))
+	lis, err := net.Listen("tcp", cfg.Grpc.Addr)
 	if err != nil {
 		zl.Fatal(err)
 	}
@@ -109,8 +108,8 @@ func buildServerOpts(cfg *config.AppConfig) (*[]grpc.ServerOption, error) {
 
 // showDebugInfo - this prints envs to ease deployment and debug
 func showDebugInfo(zl *zap.Logger, cfg *config.AppConfig) {
-	zl.Info("GRPC URL: ", zap.Int("localhost", cfg.Grpc.Port))
-	zl.Info("NATS URL: ", zap.String("NATS_URL", os.Getenv("NATS_URL")))
+	zl.Info("GRPC URL: ", zap.String("addr", cfg.Grpc.Addr))
+	zl.Info("NATS URL: ", zap.String("addr", os.Getenv("NATS_URL")))
 	zl.Info("GRPC Auth: ", zap.Bool("TLS", cfg.Grpc.TLSEnabled))
 	zl.Info("GRPC Reflect: ", zap.Bool("Reflection", cfg.Grpc.ReflectEnabled))
 	zl.Info("Job timeout:", zap.Int("timeout, sec", cfg.Sdk.JobTime))

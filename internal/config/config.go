@@ -25,9 +25,8 @@ type httpConfig struct {
 type grpcConfig struct {
 	TLSEnabled     bool
 	ReflectEnabled bool
-	Host           string
 	Addr           string
-	CertFile       string
+	PemFile        string
 	KeyFile        string
 }
 
@@ -84,7 +83,7 @@ func (cfg *AppConfig) AppInit(name, path string) error {
 	cfg.Grpc.TLSEnabled = viper.GetBool("grpc.tls_enabled")
 	cfg.Grpc.ReflectEnabled = viper.GetBool("grpc.allow_reflection")
 	cfg.Grpc.Addr = viper.GetString("grpc.addr")
-	cfg.Grpc.CertFile = viper.GetString("grpc.cert_file")
+	cfg.Grpc.PemFile = viper.GetString("grpc.pem_file")
 	cfg.Grpc.KeyFile = viper.GetString("grpc.key_file")
 
 	// http setup

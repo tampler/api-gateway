@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/neurodyne-web-services/api-gateway/internal/config"
 	"github.com/neurodyne-web-services/api-gateway/pkg/genout/cc"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
@@ -33,10 +34,22 @@ import (
 	"google.golang.org/grpc/credentials/oauth"
 )
 
+const (
+	CONFIG_PATH = "../../configs"
+	CONFIG_NAME = "app"
+)
+
 func main() {
 	flag.Parse()
 
 	log.Println("Client running ...")
+
+	// Build a global config
+	var cfg config.AppConfig
+
+	if err := cfg.AppInit(CONFIG_NAME, CONFIG_PATH); err != nil {
+		log.Fatalf("Config failed %s", err.Error())
+	}
 
 	rpcCreds := oauth.NewOauthAccess(&oauth2.Token{AccessToken: "client-x-id"})
 	trnCreds, err := credentials.NewClientTLSFromFile("../../certs/server.pem", "localhost")
@@ -51,7 +64,7 @@ func main() {
 	// opts = append(opts, grpc.WithBlock())
 
 	// Set up a connection to the server.
-	conn, err := grpc.Dial("localhost:50051", opts...)
+	conn, err := grpc.Dial(cfg.Grpc.Addr, opts...)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

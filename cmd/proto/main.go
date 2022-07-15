@@ -91,7 +91,7 @@ func buildServerOpts(cfg *config.AppConfig) (*[]grpc.ServerOption, error) {
 		return &opts, nil
 	}
 
-	cert, err := tls.LoadX509KeyPair(cfg.Grpc.CertFile, cfg.Grpc.KeyFile)
+	cert, err := tls.LoadX509KeyPair(cfg.Grpc.PemFile, cfg.Grpc.KeyFile)
 	if err != nil {
 		return nil, err
 	}

@@ -2,8 +2,8 @@
 [grpc]
 addr = "192.168.1.93:50051"
 allow_reflection = false
-cert_file = "./certs/server.pem"
 key_file = "./certs/server.key"
+pem_file = "./certs/server.pem"
 tls_enabled = false
 
 [http]
@@ -42,5 +42,5 @@ metrics_port = 0
 name = "PONG"
 
 [sdk]
-job_time_sec = 240
+job_time_sec = 120
 kv_bucket_name = "ec2buck"
